@@ -1,6 +1,6 @@
 FROM python:3.11
 
-#From https://gist.github.com/MichalZalecki/4a87880bbe7a3a5428b5aebebaa5cd97
+# From https://gist.github.com/MichalZalecki/4a87880bbe7a3a5428b5aebebaa5cd97
 ARG USER_NAME="main"
 ARG USER_PASSWORD="main"
 
@@ -13,7 +13,7 @@ RUN echo $USER_NAME
 RUN echo $USER_PASSWORD
 RUN echo $CONTAINER_IMAGE_VER
 
-# install the tools i wish to use
+# Install the tools I wish to use
 RUN apt-get update && \
   apt-get install -y sudo \
   vim \
@@ -24,37 +24,45 @@ RUN apt-get update && \
   zsh \
   wget \
   zip \
-  # set up locale
   && locale-gen en_US.UTF-8 \
-  # add a user (--disabled-password: the user won't be able to use the account until the password is set)
   && adduser --quiet --disabled-password --shell /bin/zsh --home /home/$USER_NAME --gecos "User" $USER_NAME \
-  # update the password
   && echo "${USER_NAME}:${USER_PASSWORD}" | chpasswd && usermod -aG sudo $USER_NAME
 
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+  apt-get install -y nodejs && \
+  node -v && npm -v
 
-# AWS CLI
-#RUN sh -c "$(curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip)"
-#RUN sh -c "unzip awscliv2.zip"
-#RUN sh -c "./aws/install"
-
+# Install Python tools
 RUN sh -c "/usr/local/bin/python -m pip install --upgrade pip"
 RUN sh -c "pip install virtualenv"
 RUN sh -c "git clone https://github.com/aws/aws-elastic-beanstalk-cli-setup.git"
 
-
-# the user we're applying this too (otherwise it most likely install for root)
+# The user we're applying this to (otherwise it most likely installs for root)
 USER $USER_NAME
-# terminal colors with xterm
+# Terminal colors with xterm
 ENV TERM xterm
-# set the zsh theme
+# Set the zsh theme
 ENV ZSH_THEME robbyrussell
 
 RUN sh -c "python /aws-elastic-beanstalk-cli-setup/scripts/ebcli_installer.py"
 
-# run the installation script  
-#  RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
+# Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
+# Install Node.js and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+  && apt-get install -y nodejs
 
-# start zsh
-CMD [ "zsh" ]
+# Copy frontend files and install dependencies
+COPY ./frontend/package.json ./frontend/package-lock.json /home/$USER_NAME/frontend/
+WORKDIR /home/$USER_NAME/frontend
+RUN npm install
+
+# Optional: Build React app (useful for production)
+# RUN npm run build
+
+# Expose port (if serving on a different port)
+EXPOSE 3000
+
+# Start zsh (or you could start the React app here with `npm start`)
+CMD ["zsh"]
