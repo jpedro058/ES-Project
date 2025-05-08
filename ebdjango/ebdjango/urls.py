@@ -20,5 +20,5 @@ from django.http import HttpResponse  # Para a resposta 'Hello, world!'
 urlpatterns = [
     path('admin/', admin.site.urls),  # Rota para o painel de administração
     path('', lambda request: HttpResponse('Hello, world!')),  # Resposta simples na raiz
-    path('api/', include('todos.urls')),  # Rota para as URLs do aplicativo "todos"
+    path('api/', include('api.urls')),  # Rota para as URLs do aplicativo "todos"
 ]
