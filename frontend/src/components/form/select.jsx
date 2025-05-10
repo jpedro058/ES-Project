@@ -21,7 +21,7 @@ const SelectComponent = ({ options, ...props }) => {
         }),
         input: (base) => ({
           ...base,
-          color: "white", // <- muda a cor do texto escrito
+          color: "white",
         }),
         menu: (base) => ({
           ...base,

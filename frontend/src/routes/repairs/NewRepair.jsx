@@ -9,7 +9,7 @@ import PriceEstimate from "../../components/form/priceEstimate";
 import SelectComponent from "../../components/form/select";
 import TimeSlots from "../../components/form/timeSlots";
 import Navbar from "../../components/navbar";
-import "./datepicker.css";
+import "../../styles/datepicker.css";
 
 function useQuery() {
   const { search } = useLocation();
