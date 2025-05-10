@@ -1,7 +1,6 @@
 import Select from "react-select";
 
-const SelectComponent = ({ options, servicesOption, ...props }) => {
-  console.log("Options:", servicesOption);
+const SelectComponent = ({ options, ...props }) => {
   return (
     <Select
       options={options}

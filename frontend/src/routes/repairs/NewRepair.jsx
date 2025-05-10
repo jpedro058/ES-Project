@@ -1,18 +1,41 @@
-import Footer from "../../components/footer";
-import Navbar from "../../components/navbar";
+import { useEffect, useMemo, useState } from "react";
+import "react-datepicker/dist/react-datepicker.css";
 import { IoIosSave } from "react-icons/io";
-import Select from "../../components/select";
-import SelectComponent from "../../components/select";
-
 import { useLocation } from "react-router-dom";
-import { useMemo } from "react";
+import Footer from "../../components/footer";
+import DatePickerField from "../../components/form/datePicker";
+import InputField from "../../components/form/inputField";
+import PriceEstimate from "../../components/form/priceEstimate";
+import SelectComponent from "../../components/form/select";
+import TimeSlots from "../../components/form/timeSlots";
+import Navbar from "../../components/navbar";
+import "./datepicker.css";
 
 function useQuery() {
   const { search } = useLocation();
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
+const generateTimeSlots = (startHour, endHour) => {
+  const slots = [];
+  for (let hour = startHour; hour < endHour; hour++) {
+    slots.push(`${String(hour).padStart(2, "0")}:00`);
+  }
+  return slots;
+};
+
 export default function NewRepair() {
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [client, setClient] = useState("");
+  const [device, setDevice] = useState("");
+  const [serviceType, setServiceType] = useState("");
+  const [issueDescription, setIssueDescription] = useState("");
+  const [email, setEmail] = useState("");
+  const estimatedPrice = 100;
+
   const deviceOptions = [
     { value: "laptop", label: "Laptop" },
     { value: "desktop", label: "Desktop" },
@@ -22,7 +45,7 @@ export default function NewRepair() {
 
   const servicesOptions = [
     { value: "screen-replacement", label: "Screen Replacement" },
-    { value: "battery-replacement", label: "Batery Replacement" },
+    { value: "battery-replacement", label: "Battery Replacement" },
     { value: "software-issues", label: "Software Issues" },
     { value: "virus-removal", label: "Virus Removal" },
   ];
@@ -30,9 +53,47 @@ export default function NewRepair() {
   const query = useQuery();
   const selectedType = query.get("type");
 
-  const defaultServiceOption = servicesOptions.find(
-    (opt) => opt.value === selectedType
-  );
+  const [selectedServiceOption, setSelectedServiceOption] = useState(null);
+
+  useEffect(() => {
+    if (selectedType) {
+      const defaultOption = servicesOptions.find(
+        (opt) => opt.value === selectedType
+      );
+      if (defaultOption) {
+        setServiceType(defaultOption.value);
+        setSelectedServiceOption(defaultOption);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedType]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      const stored = JSON.parse(localStorage.getItem("bookings") || "{}");
+      setBookedSlots(stored[selectedDate] || []);
+      setTimeSlots(generateTimeSlots(9, 18));
+    }
+  }, [selectedDate]);
+
+  const handleBooking = (e) => {
+    e.preventDefault();
+
+    if (!selectedDate || !selectedTime) {
+      alert("Please select a date and time.");
+      return;
+    }
+
+    console.log("Booking confirmed!", {
+      client,
+      email,
+      device,
+      serviceType,
+      issueDescription,
+      date: selectedDate,
+      time: selectedTime,
+    });
+  };
 
   return (
     <div className="bg-[#0F3D57] text-white font-sans min-h-screen flex flex-col">
@@ -45,26 +106,37 @@ export default function NewRepair() {
 
         <form
           className="bg-[#145374] p-8 rounded-lg shadow-lg max-w-2xl mx-auto space-y-6"
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleBooking}
         >
-          <div>
-            <label className="block text-md font-medium mb-2" htmlFor="client">
-              Client
-            </label>
-            <input
-              type="text"
-              id="client"
-              className="w-full px-4 py-2 bg-[#0F3D57] border border-[#1F5F77] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00B8D9]"
-              placeholder="Client's name"
-              required
-            />
-          </div>
+          <InputField
+            label="Name"
+            type="text"
+            id="client"
+            placeholder="Client's name"
+            value={client}
+            onChange={(e) => setClient(e.target.value)}
+            required
+          />
+
+          <InputField
+            label="Email"
+            type="email"
+            id="email"
+            placeholder="Client's email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
           <div>
             <label className="block text-md font-medium mb-2" htmlFor="device">
               Device
             </label>
-            <SelectComponent options={deviceOptions} required />
+            <SelectComponent
+              options={deviceOptions}
+              required
+              onChange={(option) => setDevice(option.value)}
+            />
           </div>
 
           <div>
@@ -73,30 +145,55 @@ export default function NewRepair() {
             </label>
             <SelectComponent
               options={servicesOptions}
-              defaultValue={defaultServiceOption}
+              value={selectedServiceOption}
+              onChange={(option) => {
+                setServiceType(option.value);
+                setSelectedServiceOption(option);
+              }}
               required
             />
           </div>
 
-          <div>
-            <label className="block text-md font-medium mb-2" htmlFor="issue">
-              Issue Description
-            </label>
-            <textarea
-              id="issue"
-              rows={4}
-              className="w-full px-4 py-2 bg-[#0F3D57] border border-[#1F5F77] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00B8D9]"
-              placeholder="Describe the problem with the device..."
-              required
+          <InputField
+            label="Issue Description"
+            type="textarea"
+            id="issue"
+            placeholder="Describe the problem with the device..."
+            value={issueDescription}
+            onChange={(e) => setIssueDescription(e.target.value)}
+            required
+          />
+
+          <DatePickerField
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+          />
+
+          {selectedDate && (
+            <TimeSlots
+              timeSlots={timeSlots}
+              bookedSlots={bookedSlots}
+              selectedTime={selectedTime}
+              setSelectedTime={setSelectedTime}
             />
-          </div>
+          )}
+
+          <PriceEstimate
+            client={client}
+            device={device}
+            serviceType={serviceType}
+            issueDescription={issueDescription}
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            estimatedPrice={estimatedPrice}
+          />
 
           <button
             type="submit"
             className="flex items-center justify-center gap-2 bg-[#00B8D9] text-[#0F3D57] font-semibold px-6 py-3 rounded-lg hover:bg-[#00a0c0] transition cursor-pointer"
           >
             <IoIosSave size={20} />
-            Save Repair
+            Book Repair
           </button>
         </form>
       </main>
