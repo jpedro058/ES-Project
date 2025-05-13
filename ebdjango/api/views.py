@@ -1,5 +1,11 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+import boto3
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
+
+stepfunctions = boto3.client('stepfunctions', region_name='us-east-1')
 
 @api_view(['POST'])
 def login_view(request):
@@ -15,7 +21,21 @@ def shop_info(request):
 
 @api_view(['POST'])
 def submit_repair(request):
-    return Response({'message': 'Repair request submitted.'})
+    body = json.loads(request.body)
+    customer_id = body['customer_id']
+    appointment_time = body['appointment_time']
+
+    try:
+        response = stepfunctions.start_execution(
+            stateMachineArn='arn:aws:states:us-east-1:995136952401:stateMachine:RepairWorkflow', # mudar account id para o vosso
+            input=json.dumps({
+                'customer_id': customer_id,
+                'appointment_time': appointment_time
+            })
+        )
+        return JsonResponse({'executionArn': response['executionArn']})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['POST'])
 def pay(request):
