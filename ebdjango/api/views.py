@@ -85,7 +85,7 @@ def get_repairs(request):
     Query parameters:
     - customer_id: Filter repairs by customer ID
     
-    Returns a list of repair request IDs.
+    Returns a list of repair information including id, status, and device type.
     """
     customer_id = request.query_params.get('customer_id')
     repairs_table = dynamodb.Table('RepairRequests')
@@ -102,10 +102,21 @@ def get_repairs(request):
             
         repairs = response['Items']
         
-        # Extract just the repair_ids from the items
-        repair_ids = [repair.get('repair_id') for repair in repairs]
+        # Create a list of dictionaries with the repair information
+        repairs_info = [
+            {
+                'repair_id': repair.get('repair_id'),
+                'status': repair.get('status'),
+                'device': repair.get('device'),
+                'service_type': repair.get('service_type'),
+                'description': repair.get('description'),
+                'initial_cost': repair.get('initial_cost'),
+                'aditional_cost': repair.get('aditional_cost')
+            }
+            for repair in repairs
+        ]
         
-        return Response({'repair_ids': repair_ids})
+        return Response({'repairs': repairs_info})
         
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -140,7 +151,7 @@ def repair_status(request, repair_id):
             'service_type': repair.get('service_type'),
             'description': repair.get('description'),
             'initial_cost': repair.get('initial_cost'),
-            'additional_cost': repair.get('additional_cost')
+            'aditional_cost': repair.get('aditional_cost')
         })
         
     except Exception as e:
