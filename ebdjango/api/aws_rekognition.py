@@ -6,6 +6,8 @@ s3 = boto3.resource('s3', region_name='us-east-1')
 
 COLLECTION_ID = 'primetech-users'
 
+my_bucket = rekognition.bucket(bucketname)
+
 def create_collection():
     try:
         response = rekognition.create_collection(CollectionId=COLLECTION_ID)
