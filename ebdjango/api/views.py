@@ -13,7 +13,7 @@ dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 def login_view(request):
     """
     Endpoint for user login with facial recognition.
-    
+    TODO
     Returns a message confirming successful login.
     """
     return Response({'message': 'Login successful (simulated facial recognition).'})
@@ -22,33 +22,53 @@ def login_view(request):
 def logout_view(request):
     """
     Endpoint for user logout.
-    
+    TODO
     Returns a message confirming successful logout.
     """
     return Response({'message': 'Logout successful.'})
 
+
 @api_view(['GET'])
 def shop_info(request):
     """
-    Retrieve information about the repair shop.
+    Home page for the repair shop.
     
-    Returns shop name and available services.
+    Returns shop information including name and available services with titles and descriptions.
     """
-    return Response({'shop': 'PrimeTech Repairs', 'services': ['Screen repair', 'Battery replacement']})
+    services = [
+        {
+            "title": "Screen Replacement",
+            "type": "screen-replacement",
+            "desc": "Is your device's screen broken, scratched or unresponsive to touch? Our specialized team will replace it with high-quality parts, guaranteeing the integrity and original sensitivity of the screen. Fast and guaranteed service.",
+        },
+        {
+            "title": "Battery Replacement",
+            "type": "battery-replacement",
+            "desc": "Do you notice that your device discharges quickly or shuts down unexpectedly? We'll replace the battery with a new one, with guaranteed performance and certified compatibility, so you can once again rely on your device's autonomy.",
+        },
+        {
+            "title": "Software Issues",
+            "type": "software-issues",
+            "desc": "Is your computer slow, does it constantly show errors or doesn't boot up properly? We carry out a complete analysis of the operating system and installed software, resolve conflicts, optimize performance and guarantee smooth and safe use.",
+        },
+        {
+            "title": "Virus Removal",
+            "type": "virus-removal",
+            "desc": "Have you detected strange behavior, pop-ups or suspicious files on your system? We use advanced tools to remove viruses, malware and spyware, restoring security and stability to your device without compromising your data.",
+        },
+    ]
+    
+    return Response({
+        'shop': 'PrimeTech Repairs',
+        'about': 'We are a specialized tech repair shop offering high-quality repair services for all your devices.',
+        'services': services
+    })
 
 @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 def submit_repair(request):
     """
     Submit a new repair request.
-    
-    {
-        "device": "Phone",
-        "service_type": "Screen Replacement",
-        "description": "Broken screen",
-        "appointment_date": "2025-05-14T15:00:00",
-        "customer_id": "12345"
-    }
 
     Initiates a StepFunctions workflow for repair processing.
     """
@@ -111,7 +131,10 @@ def get_repairs(request):
                 'service_type': repair.get('service_type'),
                 'description': repair.get('description'),
                 'initial_cost': repair.get('initial_cost'),
-                'aditional_cost': repair.get('aditional_cost')
+                'aditional_cost': repair.get('aditional_cost'),
+                'appointment_date': repair.get('appointment_date'),
+                'customer_showed_up': repair.get('customer_showed_up'),
+                'paid': repair.get('paid')
             }
             for repair in repairs
         ]
@@ -121,50 +144,36 @@ def get_repairs(request):
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 
-@api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-def repair_status(request, repair_id):
+@api_view(['PUT'])
+def update_showed_up(request, repair_id):
     """
-    Get the current status of a repair by repair_id.
-    
-    Returns the current status of the repair along with its information.
+    Update the status of customer_showed_up to true.
+
+    Returns a message confirming the update.
     """
+    repairs_table = dynamodb.Table('RepairRequests')
     try:
-        repairs_table = dynamodb.Table('RepairRequests')
-        response = repairs_table.get_item(
+        response = repairs_table.update_item(
             Key={
                 'repair_id': repair_id
+            },
+            UpdateExpression='SET customer_showed_up = :val1',
+            ExpressionAttributeValues={
+                ':val1': True
             }
         )
-        
-        if 'Item' not in response:
-            return Response({
-                'status': 'error',
-                'message': 'Repair not found'
-            }, status=404)
-            
-        repair = response['Item']
-        
-        return Response({
-            'repair_status': repair.get('status'),
-            'device': repair.get('device'),
-            'service_type': repair.get('service_type'),
-            'description': repair.get('description'),
-            'initial_cost': repair.get('initial_cost'),
-            'aditional_cost': repair.get('aditional_cost')
-        })
-        
+        return Response({'message': 'Customer showed up status updated successfully.'})
     except Exception as e:
-        return Response({
-            'status': 'error',
-            'message': str(e)
-        }, status=500)
+        return Response({'error': str(e)}, status=500)
+
     
 @api_view(['POST'])
 def pay(request):
     """
     Process payment for a repair.
     
-    Returns a message confirming successful payment processing.
+    TODO
     """
     return Response({'message': 'Payment processed.'})
+
+
