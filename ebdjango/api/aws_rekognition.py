@@ -6,7 +6,13 @@ s3 = boto3.resource('s3', region_name='us-east-1')
 
 COLLECTION_ID = 'primetech-users'
 
-my_bucket = rekognition.bucket(bucketname)
+s3 = boto3.resource(
+    's3',
+    region_name='us-east-1',
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    aws_session_token=settings.AWS_SESSION_TOKEN
+)
 
 def create_collection():
     try:
