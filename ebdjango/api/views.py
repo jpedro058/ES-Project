@@ -13,14 +13,16 @@ import jwt
 
 stepfunctions = boto3.client('stepfunctions', region_name='us-east-1')
 
+create_collection()
+
 @api_view(['POST'])
 def register(request):
     username = request.data.get('username')
-    image_key = request.data.get('image_key')  # Ex: toindex/user1.jpg
+    image_key = 'toindex/andy_portrait_resized.jpg'
 
     try:
         user = CustomUser.objects.get(username=username)
-        result = index_face(settings.AWS_STORAGE_BUCKET_NAME, image_key)
+        result = index_face('primetechusersloginfaces', image_key)
         face_id = result['FaceRecords'][0]['Face']['FaceId']
         user.face_id = face_id
         user.s3_image_key = image_key
@@ -32,10 +34,10 @@ def register(request):
 
 @api_view(['POST'])
 def login(request):
-    image_key = request.data.get('image_key')  # Ex: todetect/teste.jpg
+    image_key = 'todetect/tentativa1.jpg'
 
     try:
-        result = search_face(settings.AWS_STORAGE_BUCKET_NAME, image_key)
+        result = search_face('primetechusersloginfaces', image_key)
         if len(result['FaceMatches']) == 0:
             return Response({'error': 'Face not recognized'}, status=401)
 

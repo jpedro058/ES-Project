@@ -6,4 +6,5 @@ class CustomUser(AbstractUser):
     """
     Custom user model that extends the default Django user model.
     """
-    face_id = models.CharField(max_length=255, blank=True, null=True)
+    face_id = models.CharField(max_length=100, blank=True, null=True)
+    s3_image_key = models.CharField(max_length=255, blank=True, null=True)
