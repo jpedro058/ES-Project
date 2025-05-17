@@ -112,17 +112,16 @@ def get_repairs(request):
     
     try:
         if customer_id:
-            # Use scan with a filter expression if customer_id is provided
+            # Filter if customer_id is provided
             response = repairs_table.scan(
                 FilterExpression=boto3.dynamodb.conditions.Attr('customer_id').eq(str(customer_id))
             )
         else:
-            # Return all repairs if no customer_id is provided
+            # All repairs if no customer_id is provided
             response = repairs_table.scan()
             
         repairs = response['Items']
         
-        # Create a list of dictionaries with the repair information
         repairs_info = [
             {
                 'repair_id': repair.get('repair_id'),
@@ -134,7 +133,8 @@ def get_repairs(request):
                 'aditional_cost': repair.get('aditional_cost'),
                 'appointment_date': repair.get('appointment_date'),
                 'customer_showed_up': repair.get('customer_showed_up'),
-                'paid': repair.get('paid')
+                'paid': repair.get('paid'),
+                'picked_up': repair.get('picked_up')
             }
             for repair in repairs
         ]
