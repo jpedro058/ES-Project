@@ -1,52 +1,49 @@
 import boto3
-import uuid
+from django.conf import settings
 
-bucketname = 'ALLv2EN-US-LTI13-116869-a03aq000009LLQrAAO'
-rekognition = boto3.client('rekognition', 
-                           region_name='us-east-1',
-                           aws_access_key_id = access_key_id,
-                           aws_secret_access_key = secret_access_key,
-                           aws_session_token = session_token)  # Muda a região se necessário
-COLLECTION_ID = 'es-project-users'
+# Inicializar cliente Rekognition
+rekognition = boto3.client(
+    'rekognition',
+    region_name='us-east-1',
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    aws_session_token=settings.AWS_SESSION_TOKEN  # se necessário
+)
 
-my_bucket = rekognition.bucket(bucketname)
+s3 = boto3.resource(
+    's3',
+    region_name='us-east-1',
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    aws_session_token=settings.AWS_SESSION_TOKEN
+)
 
-def create_collection():
-    try:
-        rekognition.create_collection(CollectionId=COLLECTION_ID)
-    except rekognition.exceptions.ResourceAlreadyExistsException:
-        pass
+COLLECTION_ID = 'primetech-users'
 
-def delete_collection():
-    try:
-        rekognition.delete_collection(CollectionId=COLLECTION_ID)
-    except rekognition.exceptions.ResourceNotFoundException:
-        pass
-    
-def index_face(image_bytes):
+def index_face(bucket_name, image_key):
     response = rekognition.index_faces(
         CollectionId=COLLECTION_ID,
-        Image={'Bytes': image_bytes},
-        ExternalImageId=str(uuid.uuid4()),
+        Image={
+            'S3Object': {
+                'Bucket': bucket_name,
+                'Name': image_key,
+            }
+        },
+        ExternalImageId=image_key,
         DetectionAttributes=['DEFAULT']
     )
-    face_records = response.get('FaceRecords', [])
-    if face_records:
-        return face_records[0]['Face']['FaceId']
-    return None
+    return response
 
-def search_face(image_bytes):
+def search_face(bucket_name, image_key):
     response = rekognition.search_faces_by_image(
         CollectionId=COLLECTION_ID,
         Image={
             'S3Object': {
-                'Bucket': bucketname,
-                'Name': 'todetect/' 
-                }
-            },
+                'Bucket': bucket_name,
+                'Name': image_key,
+            }
+        },
         MaxFaces=1,
+        FaceMatchThreshold=85
     )
-    face_matches = response.get('FaceMatches', [])
-    if face_matches:
-        return face_matches[0]['Face']['FaceId']
-    return None
+    return response

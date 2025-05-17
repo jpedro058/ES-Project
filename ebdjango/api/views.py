@@ -6,49 +6,48 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from rest_framework import status
 from .serializers import RegisterSerializer, LoginSerializer
-from .aws_rekognition import index_face, search_face, create_collection
+from .aws_rekognition import index_face, search_face, create_collection 
+from django.conf import settings
 import json
 import jwt
 
 stepfunctions = boto3.client('stepfunctions', region_name='us-east-1')
 
 @api_view(['POST'])
-def register_view(request):
-    imagem = request.FILES.get('image')
-    if not imagem:
-        return Response({'error': 'Image is required.'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    face_id = index_face(imagem.read())
-    if not face_id:
-        return Response({'error': 'Face not detected.'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    data = request.data.copy()
-    data['face_id'] = face_id
-    serializer = RegisterSerializer(data=data)
-    if serializer.is_valid():
-        user = serializer.save()
-        user.set_password(data['password'])
+def register(request):
+    username = request.data.get('username')
+    image_key = request.data.get('image_key')  # Ex: toindex/user1.jpg
+
+    try:
+        user = CustomUser.objects.get(username=username)
+        result = index_face(settings.AWS_STORAGE_BUCKET_NAME, image_key)
+        face_id = result['FaceRecords'][0]['Face']['FaceId']
+        user.face_id = face_id
+        user.s3_image_key = image_key
         user.save()
-        return Response({'message': 'User registered successfully.'}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'Face registered successfully.'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
-def login_view(request):
-    imagem = request.FILES.get('image')
-    if not imagem:
-        return Response({'error': 'Image is required.'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    face_id = search_face(imagem.read())
-    if not face_id:
-        return Response({'error': 'Face not recognized.'}, status=status.HTTP_401_UNAUTHORIZED)
-    
-    try:
-        user = CustomUser.objects.get(face_id=face_id)
-        return Response({
-            'message': 'Welcome back, {user.username}'})
-    except CustomUser.DoesNotExist:
-        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+def login(request):
+    image_key = request.data.get('image_key')  # Ex: todetect/teste.jpg
 
+    try:
+        result = search_face(settings.AWS_STORAGE_BUCKET_NAME, image_key)
+        if len(result['FaceMatches']) == 0:
+            return Response({'error': 'Face not recognized'}, status=401)
+
+        face_id = result['FaceMatches'][0]['Face']['FaceId']
+        user = CustomUser.objects.get(face_id=face_id)
+
+        return Response({'message': 'Login successful', 'username': user.username})
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
+    
 @api_view(['POST'])
 def logout_view(request):
     return Response({'message': 'Logout successful.'})
