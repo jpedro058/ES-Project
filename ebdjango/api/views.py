@@ -19,6 +19,8 @@ dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 BUCKET_NAME = 'primetechusersloginfaces'
 
+create_collection()
+
 @api_view(['POST'])
 def register(request):
     
