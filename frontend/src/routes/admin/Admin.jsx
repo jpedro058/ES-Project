@@ -1,8 +1,10 @@
+//import { useEffect, useState } from "react";
 import { useEffect, useState } from "react";
 import Footer from "../../components/footer";
 import Navbar from "../../components/navbar";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { Link } from "react-router-dom";
+import { Check } from "lucide-react";
 
 const repairStatus = {
   Scheduled: (
@@ -27,15 +29,13 @@ const repairStatus = {
   ),
 };
 
-export default function MyRepairs() {
+export default function Admin() {
   const [repairs, setRepairs] = useState([]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const fetchRepairs = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:8000/repairs?customer_id=1"
-        );
+        const response = await fetch("http://localhost:8000/repairs");
         if (!response.ok) {
           throw new Error("Failed to fetch repairs");
         }
@@ -49,6 +49,35 @@ export default function MyRepairs() {
 
     fetchRepairs();
   }, [setRepairs]);
+
+  function handleCostumerShows(repair) {
+    const updatedRepair = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/admin/showed-up/${repair.repair_id}/`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to update repair");
+        }
+        setRepairs((prevRepairs) =>
+          prevRepairs.map((r) =>
+            r.repair_id === repair.repair_id
+              ? { ...r, customer_showed_up: true }
+              : r
+          )
+        );
+      } catch (error) {
+        console.error("Error updating repair:", error);
+      }
+    };
+    updatedRepair();
+  }
 
   return (
     <div className="bg-[#0F3D57] text-white font-sans min-h-screen flex flex-col">
@@ -76,6 +105,9 @@ export default function MyRepairs() {
                   <th className="py-4 px-6 font-semibold">Device</th>
                   <th className="py-4 px-6 font-semibold">Type</th>
                   <th className="py-4 px-10 font-semibold">State</th>
+                  <th className="py-4 px-10 font-semibold">
+                    Customer Showed Up
+                  </th>
                   <th className="py-4 px-6 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -99,6 +131,26 @@ export default function MyRepairs() {
                           </span>
                         </Link>
                       </td>
+                      <td className="py-4 px-12">
+                        <button
+                          type="button"
+                          className={`text-[#00B8D9] hover:text-green-400 hover:underline transition ${
+                            repair.customer_showed_up
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer"
+                          }`}
+                          disabled={repair.customer_showed_up}
+                          onClick={() => {
+                            handleCostumerShows(repair);
+                          }}
+                        >
+                          {repair.customer_showed_up ? (
+                            <Check className="w-6 h-6 text-green-400" />
+                          ) : (
+                            "Confirm costumer"
+                          )}
+                        </button>
+                      </td>
                       <td className="py-4 px-6 space-x-5">
                         <Link
                           to={`/repair-details/${repair.repair_id}`}
@@ -107,6 +159,17 @@ export default function MyRepairs() {
                         >
                           Details
                         </Link>
+
+                        {repair.status === "Lost" ? (
+                          <span />
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-red-400 hover:underline cursor-pointer transition duration-300 ease-out"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
