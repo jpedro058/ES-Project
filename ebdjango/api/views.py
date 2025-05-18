@@ -331,3 +331,27 @@ def update_picked_up(request, repair_id):
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 
+@api_view(['PUT'])
+def update_aditional_cost(request, repair_id):
+    """
+    Admin: Update the additional cost of a repair.
+
+    Returns a message confirming the update.
+    """
+    repairs_table = dynamodb.Table('RepairRequests')
+    try:
+        body = json.loads(request.body)
+        additional_cost = body['additional_cost']
+        
+        response = repairs_table.update_item(
+            Key={
+                'repair_id': repair_id
+            },
+            UpdateExpression='SET additional_cost = :val1',
+            ExpressionAttributeValues={
+                ':val1': additional_cost
+            }
+        )
+        return Response({'message': 'Additional cost updated successfully.'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

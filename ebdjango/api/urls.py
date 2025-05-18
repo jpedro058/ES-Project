@@ -11,5 +11,6 @@ urlpatterns = [
     path('repairs/', views.get_repairs, name='get_repairs'),
     path('pay/<repair_id>/', views.pay, name='pay'),
     path('admin/showed-up/<repair_id>/', views.update_showed_up, name='update_showed_up'),
-    path('admin/picked-up/<repair_id>/', views.update_picked_up, name='update_picked_up')
+    path('admin/picked-up/<repair_id>/', views.update_picked_up, name='update_picked_up'),
+    path('admin/adcost/<repair_id>/', views.update_aditional_cost, name='update_aditional_cost')
 ]
