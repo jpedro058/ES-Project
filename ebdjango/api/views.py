@@ -13,7 +13,7 @@ dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 def login_view(request):
     """
     Endpoint for user login with facial recognition.
-    TODO
+    
     Returns a message confirming successful login.
     """
     return Response({'message': 'Login successful (simulated facial recognition).'})
@@ -22,7 +22,7 @@ def login_view(request):
 def logout_view(request):
     """
     Endpoint for user logout.
-    TODO
+    
     Returns a message confirming successful logout.
     """
     return Response({'message': 'Logout successful.'})
@@ -200,7 +200,7 @@ def update_showed_up(request, repair_id):
         return Response({'message': 'Customer showed up status updated successfully.'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
-    
+
 @api_view(['PUT'])
 def update_picked_up(request, repair_id):
     """
