@@ -12,14 +12,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from api.models import CustomUser
 import json
-import jwt
 
 stepfunctions = boto3.client('stepfunctions', region_name='us-east-1')
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 BUCKET_NAME = 'primetechusersloginfaces'
 
-create_collection()
+BUCKET_NAME = 'primetechusersloginfaces'
 
 @api_view(['POST'])
 def register(request):
