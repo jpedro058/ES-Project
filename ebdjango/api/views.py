@@ -143,11 +143,46 @@ def get_repairs(request):
         
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+  
+@api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+def pay(request, repair_id):
+    """
+    Process payment for a repair.
+    
+    Returns a message confirming the payment status.
+    """
+    # TODO: Add authentication & user check
+    repairs_table = dynamodb.Table('RepairRequests')
+
+    try:
+        response = repairs_table.get_item(Key={'repair_id': repair_id})
+        item = response.get('Item')
+
+        if not item:
+            return Response({"error": "Repair not found"}, status=404)
+        if item.get('paid'):
+            return Response({"message": "Already paid"}, status=200)
+
+        repairs_table.update_item(
+            Key={'repair_id': repair_id},
+            UpdateExpression="SET paid = :val",
+            ExpressionAttributeValues={
+                ':val': True,
+                ':false': False
+            },
+            ConditionExpression="attribute_not_exists(paid) OR paid = :false"
+        )
+
+        return Response({"message": "Payment successful"}, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 @api_view(['PUT'])
 def update_showed_up(request, repair_id):
     """
-    Update the status of customer_showed_up to true.
+    Admin: Update the status of customer_showed_up to true.
 
     Returns a message confirming the update.
     """
@@ -165,15 +200,26 @@ def update_showed_up(request, repair_id):
         return Response({'message': 'Customer showed up status updated successfully.'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
-
     
-@api_view(['POST'])
-def pay(request):
+@api_view(['PUT'])
+def update_picked_up(request, repair_id):
     """
-    Process payment for a repair.
-    
-    TODO
-    """
-    return Response({'message': 'Payment processed.'})
+    Admin: Update the status of picked_up to true.
 
+    Returns a message confirming the update.
+    """
+    repairs_table = dynamodb.Table('RepairRequests')
+    try:
+        response = repairs_table.update_item(
+            Key={
+                'repair_id': repair_id
+            },
+            UpdateExpression='SET picked_up = :val1',
+            ExpressionAttributeValues={
+                ':val1': True
+            }
+        )
+        return Response({'message': 'Repair picked up status updated successfully.'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
