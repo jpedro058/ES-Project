@@ -8,3 +8,4 @@ class CustomUser(AbstractUser):
     """
     face_id = models.CharField(max_length=100, blank=True, null=True)
     s3_image_key = models.CharField(max_length=255, blank=True, null=True)
+    
