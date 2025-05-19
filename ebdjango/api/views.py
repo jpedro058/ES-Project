@@ -73,25 +73,29 @@ def register(request):
 @api_view(['POST'])
 def login(request):
     """
-    Endpoint for user login with facial recognition.
+    Endpoint for user login with facial recognition and username validation.
     
-    Returns a message confirming successful login.
+    Requires: image_filename, username
     """
+    username = request.data.get('username')
     image_filename = request.data.get('image_filename')  # Ex: "login_attempt.jpg"
-    
-    if not image_filename:
+
+    if not image_filename or not username:
         return Response(
-            {'error': 'image_filename é obrigatório'},
+            {'error': 'username e image_filename são obrigatórios'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
-        # Caminho completo no S3
+        # Verifica se o utilizador existe
+        user = CustomUser.objects.get(username=username)
+
+        # Caminho da imagem no S3
         image_key = f"todetect/{image_filename}"
-        
-        # Busca o rosto
+
+        # Busca o rosto na imagem
         result = search_face(BUCKET_NAME, image_key)
-        
+
         if not result.get('FaceMatches'):
             return Response(
                 {'error': 'Rosto não reconhecido'},
@@ -99,14 +103,19 @@ def login(request):
             )
 
         face_match = result['FaceMatches'][0]
-        if face_match['Similarity'] < 90:  # Limiar de confiança
+        if face_match['Similarity'] < 90:
             return Response(
                 {'error': 'Similaridade facial insuficiente'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        face_id = face_match['Face']['FaceId']
-        user = CustomUser.objects.get(face_id=face_id)
+        # Verifica se o face_id reconhecido bate com o do user
+        face_id_detected = face_match['Face']['FaceId']
+        if face_id_detected != user.face_id:
+            return Response(
+                {'error': 'Rosto não corresponde ao utilizador fornecido'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         return Response({
             'message': 'Login bem-sucedido',
@@ -117,7 +126,7 @@ def login(request):
 
     except CustomUser.DoesNotExist:
         return Response(
-            {'error': 'Usuário não encontrado'},
+            {'error': 'Utilizador não encontrado'},
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
@@ -125,7 +134,7 @@ def login(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-      
+
 @api_view(['POST'])
 def logout_view(request):
     """
