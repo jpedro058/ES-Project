@@ -184,7 +184,7 @@ def submit_repair(request):
     device = body['device']
     service_type = body['service_type']
     description = body['description']
-    customer_id = body['customer_id']  # This should be the logged-in user's ID
+    customer_id = body['customer_id']  #! This should be the logged-in user's ID
     appointment_date = body['appointment_date']
     initial_cost = body['initial_cost']
 
