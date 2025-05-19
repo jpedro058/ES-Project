@@ -8,9 +8,7 @@ COLLECTION_ID = 'primetech-users'
 
 s3 = boto3.resource(
     's3',
-    aws_access_key_id='ASIA6PMWI3BIQUYKQMEI',
-    aws_secret_access_key='FdDe4Qa7Y1bOXMicVM2NkvepXTi+jQhAPBPjHvQD',
-    aws_session_token='IQoJb3JpZ2luX2VjEMH//////////wEaCXVzLXdlc3QtMiJHMEUCIQDcKV9uz7Ly83jsVLGLD0AFTIZH03hcFlUrrnOpVMq1IgIgPKd74Cvs6FCG8hGpAKa4yDv+TzaBbd+TJgDX4ZhZOsgqtAIIehAAGgw5OTUxMzY5NTI0MDEiDPTnn/UklPHRS8L5mCqRAjYcSC3Lu2SV0rlmyoMh2GmXktaNsAxAyd5r5U2bLisqQeug3E0aiUh4fI5pBNHV27rTkaDYC6HPdJ6gtrP1s4fkeyxrJvqL6K/QaHxXtOoWzX7zoft2clMXt93eEslztBR897iqu99WZ9udlGcP+y+s0ytFjqLGJVapxLlCTZ4QEDpAPULQ9i32wiFL7AMo8dZk0AyAf2LyvsptA0t5BrdAcJL//kxazHb4HKizrDtD4tL6Zg/K8IAS22EmQh51H73OQbTGtOzPb4Q8WnoP15eBFFoW8ulZ6x57cE1kontnJMJqIVt3x5zD33dJdEXx16OP8Augd5lgLohzVYECSwYRdHi/f9Eeo9ICOEitlae99DDjl6jBBjqdAZLK+yWecqtbejMNi64NdetfD4VeCXKpoBXOlcbuhrQDyfY4giWeBFXEY8Sg4A7lCRH3GEBfDGfHin/yhD44hAPmgPkA0nYHQaS3b+iW1Fy3XGn09jIL6F37mXGL6gQLwVOhEiz3lC6ZtxcoxkMxQyjhOCitBRqJbnH2VBK5j9WX/10C4tXIjBKokgrMqfQ57y582mPs9/FS+reWV4M=',
+    region_name='us-east-1'
 )
 
 def create_collection():
