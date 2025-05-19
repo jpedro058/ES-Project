@@ -100,8 +100,12 @@ WSGI_APPLICATION = 'ebdjango.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'primetech_db',
+        'USER': 'primetech_user',
+        'PASSWORD': 'password',
+        'HOST': 'host.docker.internal',
+        'PORT': '5555',
     }
 }
 
