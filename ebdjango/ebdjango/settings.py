@@ -84,11 +84,11 @@ WSGI_APPLICATION = 'ebdjango.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'primetech_db',
+        'NAME': 'primetech-db',
         'USER': 'primetech_user',
         'PASSWORD': 'password',
-        'HOST': 'host.docker.internal',
-        'PORT': '5555',
+        'HOST': 'primetech-db.cjo4iccyu7j0.us-east-1.rds.amazonaws.com',
+        'PORT': '5432',
     }
 }
 
