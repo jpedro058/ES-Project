@@ -54,6 +54,33 @@ export default function Admin() {
     const updatedRepair = async () => {
       try {
         const response = await fetch(
+          `http://localhost:8000/admin/picked-up/${repair.repair_id}/`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to update repair");
+        }
+        setRepairs((prevRepairs) =>
+          prevRepairs.map((r) =>
+            r.repair_id === repair.repair_id ? { ...r, picked_up: true } : r
+          )
+        );
+      } catch (error) {
+        console.error("Error updating repair:", error);
+      }
+    };
+    updatedRepair();
+  }
+
+  function handleCostumerShowedUp(repair) {
+    const updatedRepair = async () => {
+      try {
+        const response = await fetch(
           `http://localhost:8000/admin/showed-up/${repair.repair_id}/`,
           {
             method: "PUT",
@@ -105,9 +132,9 @@ export default function Admin() {
                   <th className="py-4 px-6 font-semibold">Device</th>
                   <th className="py-4 px-6 font-semibold">Type</th>
                   <th className="py-4 px-10 font-semibold">State</th>
-                  <th className="py-4 px-10 font-semibold">
-                    Customer Showed Up
-                  </th>
+                  <th className="py-4 px-10 font-semibold">Paid</th>
+                  <th className="py-4 px-10 font-semibold">Picked Up</th>
+                  <th className="py-4 px-10 font-semibold">Showed Up</th>
                   <th className="py-4 px-6 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -131,6 +158,33 @@ export default function Admin() {
                           </span>
                         </Link>
                       </td>
+                      <td className="py-4 px-6">
+                        {repair.paid ? (
+                          <Check className="w-6 h-6 text-green-400" />
+                        ) : (
+                          <span className="text-red-400">Not paid</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-12">
+                        <button
+                          type="button"
+                          className={`text-[#00B8D9] hover:text-green-400 hover:underline transition ${
+                            repair.picked_up
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer"
+                          }`}
+                          disabled={repair.picked_up}
+                          onClick={() => {
+                            handleCostumerShows(repair);
+                          }}
+                        >
+                          {repair.picked_up ? (
+                            <Check className="w-6 h-6 text-green-400" />
+                          ) : (
+                            "Confirm costumer"
+                          )}
+                        </button>
+                      </td>
                       <td className="py-4 px-12">
                         <button
                           type="button"
@@ -141,13 +195,13 @@ export default function Admin() {
                           }`}
                           disabled={repair.customer_showed_up}
                           onClick={() => {
-                            handleCostumerShows(repair);
+                            handleCostumerShowedUp(repair);
                           }}
                         >
                           {repair.customer_showed_up ? (
                             <Check className="w-6 h-6 text-green-400" />
                           ) : (
-                            "Confirm costumer"
+                            "Confirm showed up"
                           )}
                         </button>
                       </td>

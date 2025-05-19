@@ -8,6 +8,9 @@ from rest_framework import status
 from .aws_rekognition import index_face, search_face 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from api.models import CustomUser
 import json
 
 stepfunctions = boto3.client('stepfunctions', region_name='us-east-1')
@@ -53,10 +56,12 @@ def register(request):
         # Cria o usuário
         user = CustomUser.objects.create(
             username=username,
-            password=password,
             face_id=face_id,
             s3_image_key=image_key
         )
+
+        user.set_password(password)
+        user.save()
 
         return Response({
             'message': 'Registro bem-sucedido',
@@ -69,6 +74,42 @@ def register(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+
+@api_view(['POST'])
+def loginWithCredentials(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    if not all([username, password]):
+        return Response(
+            {'error': 'username e password são obrigatórios'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = authenticate(username=username, password=password)
+
+    if user is not None:
+        tokens = get_tokens_for_user(user)
+        return Response({
+            'message': 'Login bem-sucedido',
+            'user_id': user.id,
+            'username': user.username,
+            'access_token': tokens['access'],
+            'refresh_token': tokens['refresh']
+        })
+    else:
+        return Response(
+            {'error': 'Credenciais inválidas'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
 
 @api_view(['POST'])
 def login(request):

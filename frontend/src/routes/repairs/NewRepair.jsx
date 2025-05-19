@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { IoIosSave } from "react-icons/io";
 import { useLocation } from "react-router-dom";
@@ -10,6 +10,7 @@ import SelectComponent from "../../components/form/select";
 import TimeSlots from "../../components/form/timeSlots";
 import Navbar from "../../components/navbar";
 import "../../styles/datepicker.css";
+import { AuthContext } from "../../context/AuthContext";
 
 function useQuery() {
   const { search } = useLocation();
@@ -35,6 +36,8 @@ export default function NewRepair() {
   const [issueDescription, setIssueDescription] = useState("");
   const [email, setEmail] = useState("");
   const estimatedPrice = 100;
+
+  const { currentUser } = useContext(AuthContext);
 
   const deviceOptions = [
     { value: "laptop", label: "Laptop" },
@@ -76,7 +79,7 @@ export default function NewRepair() {
     }
   }, [selectedDate]);
 
-  const handleBooking = (e) => {
+  const handleBooking = async (e) => {
     e.preventDefault();
 
     if (!selectedDate || !selectedTime) {
@@ -84,15 +87,45 @@ export default function NewRepair() {
       return;
     }
 
-    console.log("Booking confirmed!", {
-      client,
-      email,
-      device,
-      serviceType,
-      issueDescription,
-      date: selectedDate,
-      time: selectedTime,
-    });
+    if (issueDescription.length < 10) {
+      alert("Issue description must be at least 10 characters long.");
+      return;
+    }
+
+    try {
+      const appointmentDateTime = new Date(
+        `${selectedDate}T${selectedTime}:00`
+      ).toISOString();
+
+      const body = {
+        device,
+        service_type: serviceType,
+        description: issueDescription,
+        appointment_date: appointmentDateTime,
+        customer_id: currentUser?.id || "5",
+        initial_cost: estimatedPrice,
+      };
+      console.log("Booking data:", body);
+
+      const response = await fetch("http://localhost:8000/new-repair/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to book repair.");
+      }
+
+      const data = await response.json();
+      console.log("Booking successful:", data);
+      alert("Repair booked successfully!");
+    } catch (error) {
+      console.error("Error booking repair:", error);
+      alert("There was an error booking the repair.");
+    }
   };
 
   return (

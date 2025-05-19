@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Footer from "../../components/footer";
 import Navbar from "../../components/navbar";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 const repairStatus = {
   Scheduled: (
@@ -29,12 +30,13 @@ const repairStatus = {
 
 export default function MyRepairs() {
   const [repairs, setRepairs] = useState([]);
+  const { currentUser } = useContext(AuthContext);
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const fetchRepairs = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/repairs?customer_id=1"
+          `http://localhost:8000/repairs?customer_id=${currentUser}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch repairs");

@@ -10,6 +10,13 @@ import NewRepair from "./routes/repairs/NewRepair";
 import RepairDetails from "./routes/repairs/RepairDetails";
 import Auth from "./routes/login/Auth";
 import Admin from "./routes/admin/admin";
+import { useContext } from "react";
+import { AuthContext } from "./context/AuthContext";
+
+function RequireAuth({ children }) {
+  const { currentUser } = useContext(AuthContext);
+  return !currentUser ? <Navigate to="/auth" /> : children;
+}
 
 function App() {
   const router = createBrowserRouter([
@@ -17,29 +24,37 @@ function App() {
       path: "/auth",
       element: <Auth />,
     },
-    /* {
+    {
       path: "/home",
       element: (
         <RequireAuth>
-          <HomePage contentType="allTasks" />
+          <HomePage />
         </RequireAuth>
       ),
-    }, */
+    },
     {
       path: "/my-repairs",
-      element: <MyRepairs />,
+      element: (
+        <RequireAuth>
+          <MyRepairs />
+        </RequireAuth>
+      ),
     },
     {
       path: "/repair-details/:id",
-      element: <RepairDetails />,
+      element: (
+        <RequireAuth>
+          <RepairDetails />
+        </RequireAuth>
+      ),
     },
     {
       path: "/new-repair",
-      element: <NewRepair />,
-    },
-    {
-      path: "/home",
-      element: <HomePage />,
+      element: (
+        <RequireAuth>
+          <NewRepair />
+        </RequireAuth>
+      ),
     },
     {
       path: "/admin",
