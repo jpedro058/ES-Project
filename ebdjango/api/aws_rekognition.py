@@ -6,6 +6,11 @@ s3 = boto3.resource('s3', region_name='us-east-1')
 
 COLLECTION_ID = 'primetech-users'
 
+s3 = boto3.resource(
+    's3',
+    region_name='us-east-1'
+)
+
 def create_collection():
     try:
         response = rekognition.create_collection(CollectionId=COLLECTION_ID)
@@ -15,6 +20,13 @@ def create_collection():
     except Exception as e:
         print("Error creating collection:", e)
 
+def create_collection():
+    try:
+        response = rekognition.create_collection(CollectionId=COLLECTION_ID)
+        print("Collection created:", response)
+    except rekognition.exceptions.ResourceAlreadyExistsException:
+        print(f"Collection '{COLLECTION_ID}' already exists.")
+        
 def index_face(bucket_name, image_key):
     try:
         # Remove o prefixo "toindex/" ou "todetect/" do ExternalImageId
