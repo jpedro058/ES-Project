@@ -8,6 +8,7 @@ drf-yasg==1.21.10
 inflection==0.5.1
 jmespath==1.0.1
 packaging==25.0
+psycopg2==2.9.10
 python-dateutil==2.9.0.post0
 pytz==2025.2
 PyYAML==6.0.2
@@ -16,4 +17,3 @@ six==1.17.0
 sqlparse==0.5.3
 uritemplate==4.1.1
 urllib3==2.4.0
-
