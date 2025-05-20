@@ -18,8 +18,6 @@ dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
 BUCKET_NAME = 'primetechusersloginfaces'
 
-BUCKET_NAME = 'primetechusersloginfaces'
-
 @api_view(['POST'])
 def register(request):
     
@@ -58,12 +56,10 @@ def register(request):
         # Cria o usuário
         user = CustomUser.objects.create(
             username=username,
+            password=password,
             face_id=face_id,
             s3_image_key=image_key
         )
-
-        user.set_password(password)
-        user.save()
 
         return Response({
             'message': 'Registro bem-sucedido',
@@ -76,7 +72,7 @@ def register(request):
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    
+
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
@@ -152,7 +148,6 @@ def login(request):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Verifica se o face_id reconhecido bate com o do user
         face_id_detected = face_match['Face']['FaceId']
         if face_id_detected != user.face_id:
             return Response(
@@ -407,3 +402,4 @@ def update_aditional_cost(request, repair_id):
         return Response({'message': 'Additional cost updated successfully.'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
