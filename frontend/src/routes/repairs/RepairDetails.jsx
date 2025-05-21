@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import Footer from "../../components/footer";
 import Navbar from "../../components/navbar";
 import { useLocation } from "react-router-dom";
+import { Dialog } from "@headlessui/react";
 
 import {
   Wrench,
@@ -13,6 +14,8 @@ import {
   UserCheck,
   CheckCircle,
 } from "lucide-react";
+import { AuthContext } from "../../context/AuthContext";
+import PaymentModal from "../../components/paymentModal";
 
 const iconMap = {
   device: <Laptop />,
@@ -29,9 +32,10 @@ const iconMap = {
 export default function RepairDetails() {
   const location = useLocation();
   const repair = location.state?.repair;
-
+  const [localRepair, setLocalRepair] = useState(repair);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const steps =
-    repair.status === "Lost"
+    localRepair.status === "Lost"
       ? ["Scheduled", "Waiting Payment", "Lost"]
       : ["Scheduled", "Waiting Payment", "Finished"];
 
@@ -46,10 +50,13 @@ export default function RepairDetails() {
     return "bg-gray-400";
   };
 
-
   const formatValue = (key, value) => {
     if (typeof value === "boolean") {
       return value ? "Yes" : "No";
+    }
+    if (typeof value === "object" && value !== null) {
+      // Evita erro convertendo para JSON string, ou mostra algo mais amigável
+      return JSON.stringify(value);
     }
     if (key.includes("cost")) {
       return `€${value}`;
@@ -67,9 +74,55 @@ export default function RepairDetails() {
     return value;
   };
 
+  async function fetchRepair() {
+    const res = await fetch(
+      `http://localhost:8000/repairs/${localRepair.repair_id}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      setLocalRepair(data.repair);
+    }
+  }
+
+  async function handlePayment() {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/pay/${localRepair.repair_id}/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            device: localRepair.device,
+            service_type: localRepair.service_type,
+            description: localRepair.description,
+            appointment_date: localRepair.appointment_date,
+            customer_id: localRepair.customer_id,
+            initial_cost: localRepair.initial_cost,
+          }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to update repair");
+      }
+      await fetchRepair();
+      setShowPaymentModal(false);
+    } catch (error) {
+      console.error("Error updating repair:", error);
+    }
+  }
+
   return (
     <div className="bg-[#0F3D57] text-white font-sans min-h-screen flex flex-col">
       <Navbar />
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        amount={localRepair.initial_cost + (localRepair.aditional_cost || 0)}
+        onConfirmPayment={handlePayment}
+      />
 
       <main className="flex-grow px-6 md:px-12 py-16">
         <div className="flex items-center justify-between mb-8">
@@ -86,7 +139,7 @@ export default function RepairDetails() {
                   <div
                     className={`capitalize w-6 h-6 md:w-30 md:h-30 rounded-full flex justify-center items-center ${getStatusColor(
                       step,
-                      repair.status
+                      localRepair.status
                     )}`}
                   >
                     <span className="text-[10px] font-bold text-center text-zinc-800">
@@ -103,7 +156,7 @@ export default function RepairDetails() {
         </div>
 
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-9">
-          {Object.entries(repair).map(([key, value]) => {
+          {Object.entries(localRepair).map(([key, value]) => {
             if (
               [
                 "repair_id",
@@ -124,10 +177,29 @@ export default function RepairDetails() {
               <Info className="w-6 h-6 text-cyan-400 flex-shrink-0" />
             );
 
-            return (
+            const isClickablePaidCard =
+              key === "paid" && localRepair.status === "Scheduled";
+
+            const cardContent = (
               <div
                 key={key}
-                className="bg-[#123C55] p-5 rounded-2xl shadow-md border border-cyan-700 hover:shadow-lg transition duration-300"
+                className={`bg-[#123C55] p-5 rounded-2xl shadow-md border border-cyan-700 hover:shadow-lg transition duration-300 ${
+                  isClickablePaidCard
+                    ? "cursor-pointer hover:border-green-500"
+                    : ""
+                }`}
+                onClick={() => {
+                  if (isClickablePaidCard) setShowPaymentModal(true);
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    isClickablePaidCard &&
+                    (e.key === "Enter" || e.key === " ")
+                  ) {
+                    setShowPaymentModal(true);
+                  }
+                }}
+                tabIndex={isClickablePaidCard ? 0 : -1}
               >
                 <div className="flex items-center mb-2 gap-2 text-cyan-300 font-semibold text-xl">
                   {icon}
@@ -138,6 +210,8 @@ export default function RepairDetails() {
                 </div>
               </div>
             );
+
+            return cardContent;
           })}
         </div>
       </main>

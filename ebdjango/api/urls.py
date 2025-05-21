@@ -14,5 +14,7 @@ urlpatterns = [
     path('admin/showed-up/<repair_id>/', views.update_showed_up, name='update_showed_up'),
     path('admin/picked-up/<repair_id>/', views.update_picked_up, name='update_picked_up'),
     path('admin/adcost/<repair_id>/', views.update_aditional_cost, name='update_aditional_cost'),
-    path('available-slots/', views.get_available_slots, name='get_available_slots')
+    path('available-slots/', views.get_available_slots, name='get_available_slots'),
+    path('repairs/<str:repair_id>/', views.get_repair_by_id, name='get_repair_by_id')
+
 ]

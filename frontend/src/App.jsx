@@ -26,11 +26,7 @@ function App() {
     },
     {
       path: "/home",
-      element: (
-        <RequireAuth>
-          <HomePage />
-        </RequireAuth>
-      ),
+      element: <HomePage />,
     },
     {
       path: "/my-repairs",
@@ -62,7 +58,7 @@ function App() {
     },
     {
       path: "/",
-      element: <Navigate to="/auth" />,
+      element: <Navigate to="/home" />,
     },
   ]);
 

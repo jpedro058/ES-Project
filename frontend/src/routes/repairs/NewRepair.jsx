@@ -17,14 +17,6 @@ function useQuery() {
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-const generateTimeSlots = (startHour, endHour) => {
-  const slots = [];
-  for (let hour = startHour; hour < endHour; hour++) {
-    slots.push(`${String(hour).padStart(2, "0")}:00`);
-  }
-  return slots;
-};
-
 export default function NewRepair() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -72,11 +64,55 @@ export default function NewRepair() {
   }, [selectedType]);
 
   useEffect(() => {
-    if (selectedDate) {
-      const stored = JSON.parse(localStorage.getItem("bookings") || "{}");
-      setBookedSlots(stored[selectedDate] || []);
-      setTimeSlots(generateTimeSlots(9, 18));
-    }
+    const fetchAvailableSlots = async () => {
+      if (!selectedDate) return;
+
+      const [year, month] = selectedDate.split("-");
+
+      try {
+        const response = await fetch(
+          `http://localhost:8000/available-slots/?year=${year}&month=${month}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Erro ao obter horários disponíveis.");
+        }
+
+        const data = await response.json();
+
+        const slotsForSelectedDay = data.filter((slot) => {
+          const slotDate = new Date(slot.start_time)
+            .toISOString()
+            .split("T")[0];
+          return slotDate === selectedDate;
+        });
+
+        const availableTimeSlots = slotsForSelectedDay
+          .filter((slot) => !slot.is_booked)
+          .map((slot) => {
+            const date = new Date(slot.start_time);
+            const hours = String(date.getUTCHours()).padStart(2, "0");
+            return `${hours}:00`;
+          });
+
+        const booked = slotsForSelectedDay
+          .filter((slot) => slot.is_booked)
+          .map((slot) => {
+            const date = new Date(slot.start_time);
+            const hours = String(date.getUTCHours()).padStart(2, "0");
+            return `${hours}:00`;
+          });
+
+        setTimeSlots(availableTimeSlots);
+        setBookedSlots(booked);
+      } catch (error) {
+        console.error("Erro ao buscar slots:", error);
+        setTimeSlots([]);
+        setBookedSlots([]);
+      }
+    };
+
+    fetchAvailableSlots();
   }, [selectedDate]);
 
   const handleBooking = async (e) => {
@@ -93,19 +129,18 @@ export default function NewRepair() {
     }
 
     try {
-      const appointmentDateTime = new Date(
-        `${selectedDate}T${selectedTime}:00`
-      ).toISOString();
+      const appointmentDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
+        .toISOString()
+        .replace(/\.\d{3}Z$/, "Z");
 
       const body = {
         device,
         service_type: serviceType,
         description: issueDescription,
         appointment_date: appointmentDateTime,
-        customer_id: currentUser?.id || "5",
+        customer_id: currentUser.toString() || "5",
         initial_cost: estimatedPrice,
       };
-      console.log("Booking data:", body);
 
       const response = await fetch("http://localhost:8000/new-repair/", {
         method: "POST",

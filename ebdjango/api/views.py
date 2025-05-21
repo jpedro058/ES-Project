@@ -55,12 +55,13 @@ def register(request):
         face_id = result['FaceRecords'][0]['Face']['FaceId']
         
         # Cria o usuário
-        user = CustomUser.objects.create(
+        user = CustomUser.objects.create_user(
             username=username,
             password=password,
             face_id=face_id,
             s3_image_key=image_key
         )
+
 
         return Response({
             'message': 'Registro bem-sucedido',
@@ -92,6 +93,7 @@ def loginWithCredentials(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    print(f"Username: {username}, Password: {password}")
     user = authenticate(username=username, password=password)
 
     if user is not None:
@@ -420,13 +422,6 @@ def update_aditional_cost(request, repair_id):
     
 @api_view(['GET'])
 def get_available_slots(request):
-    """
-    Get available appointment slots for a given year and month.
-    
-    Query params:
-    - year: Year (e.g. 2025)
-    - month: Month (e.g. 5)
-    """
     year = request.query_params.get('year')
     month = request.query_params.get('month')
 
@@ -449,4 +444,75 @@ def get_available_slots(request):
 
     serializer = AppointmentSlotSerializer(slots, many=True)
     return Response(serializer.data)
+""" from datetime import date
+from django.utils.timezone import make_aware, datetime
 
+from datetime import datetime, date, time
+
+@api_view(['GET'])
+def get_available_slots(request):
+
+    year = request.query_params.get('year')
+    month = request.query_params.get('month')
+
+    if not year or not month:
+        return Response({"error": "year and month are required query parameters."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        year = int(year)
+        month = int(month)
+    except ValueError:
+        return Response({"error": "year and month must be integers."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    today = date.today()
+
+    slots = AppointmentSlot.objects.filter(
+        start_time__year=year,
+        start_time__month=month,
+        is_booked=False
+    ).order_by('start_time')
+
+    if year == today.year and month == today.month:
+        start_of_today = datetime.combine(today, time.min) 
+        slots = slots.filter(start_time__gte=start_of_today)
+
+    serializer = AppointmentSlotSerializer(slots, many=True)
+    return Response(serializer.data) """
+
+
+
+@api_view(['GET'])
+def get_repair_by_id(request, repair_id):
+    """
+    Retrieve a single repair request by its repair_id from DynamoDB,
+    excluding customer_id and returning fields in a specific order.
+    """
+    repairs_table = dynamodb.Table('RepairRequests')
+
+    try:
+        response = repairs_table.get_item(Key={'repair_id': repair_id})
+        item = response.get('Item')
+
+        if not item:
+            return Response({'error': 'Repair not found'}, status=404)
+
+        ordered_item = {
+            "repair_id": item.get("repair_id"),
+            "status": item.get("status"),
+            "device": item.get("device"),
+            "service_type": item.get("service_type"),
+            "description": item.get("description"),
+            "initial_cost": item.get("initial_cost"),
+            "aditional_cost": item.get("aditional_cost"),
+            "appointment_date": item.get("appointment_date"),
+            "customer_showed_up": item.get("customer_showed_up"),
+            "paid": item.get("paid"),
+            "picked_up": item.get("picked_up"),
+        }
+
+        return Response({'repair': ordered_item})
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

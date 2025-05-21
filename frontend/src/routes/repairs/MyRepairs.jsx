@@ -43,7 +43,6 @@ export default function MyRepairs() {
         }
         const data = await response.json();
         setRepairs(data.repairs);
-        console.log(data.repairs);
       } catch (error) {
         console.error("Error fetching repairs:", error);
       }
