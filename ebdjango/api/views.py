@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import CustomUser
+from .models import CustomUser, AppointmentSlot
+from .serializers import AppointmentSlotSerializer
 import boto3
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -231,13 +232,24 @@ def submit_repair(request):
     device = body['device']
     service_type = body['service_type']
     description = body['description']
-    customer_id = body['customer_id']  #! This should be the logged-in user's ID
-    appointment_date = body['appointment_date']
+    customer_id = body['customer_id']  #! Ideally get from logged-in user, not from body
+    appointment_date = body['appointment_date']  # e.g., ISO format string
     initial_cost = body['initial_cost']
 
+    # Check if the appointment slot is available
+    try:
+        slot = AppointmentSlot.objects.get(start_time=appointment_date, is_booked=False)
+    except AppointmentSlot.DoesNotExist:
+        return JsonResponse({'error': 'Selected appointment slot is no longer available.'}, status=400)
+
+    # Mark the slot as booked
+    slot.is_booked = True
+    slot.save()
+
+    # Start the StepFunctions workflow
     try:
         response = stepfunctions.start_execution(
-            stateMachineArn='arn:aws:states:us-east-1:995136952401:stateMachine:RepairWorkflow', # mudar para o vosso ARN
+            stateMachineArn='arn:aws:states:us-east-1:995136952401:stateMachine:RepairWorkflow',
             input=json.dumps({
                 'device': device,
                 'service_type': service_type,
@@ -249,6 +261,9 @@ def submit_repair(request):
         )
         return JsonResponse({'executionArn': response['executionArn']})
     except Exception as e:
+        # Optionally, you might want to rollback the booking here if workflow fails
+        slot.is_booked = False
+        slot.save()
         return JsonResponse({'error': str(e)}, status=500)
     
 @api_view(['GET'])
@@ -402,4 +417,36 @@ def update_aditional_cost(request, repair_id):
         return Response({'message': 'Additional cost updated successfully.'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+@api_view(['GET'])
+def get_available_slots(request):
+    """
+    Get available appointment slots for a given year and month.
+    
+    Query params:
+    - year: Year (e.g. 2025)
+    - month: Month (e.g. 5)
+    """
+    year = request.query_params.get('year')
+    month = request.query_params.get('month')
+
+    if not year or not month:
+        return Response({"error": "year and month are required query parameters."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        year = int(year)
+        month = int(month)
+    except ValueError:
+        return Response({"error": "year and month must be integers."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    slots = AppointmentSlot.objects.filter(
+        start_time__year=year,
+        start_time__month=month,
+        is_booked=False
+    ).order_by('start_time')
+
+    serializer = AppointmentSlotSerializer(slots, many=True)
+    return Response(serializer.data)
 
