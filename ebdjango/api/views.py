@@ -176,16 +176,6 @@ def login(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-@api_view(['POST'])
-def logout_view(request):
-    """
-    Endpoint for user logout.
-    
-    Returns a message confirming successful logout.
-    """
-    return Response({'message': 'Logout successful.'})
-
-
 @api_view(['GET'])
 def shop_info(request):
     """
@@ -324,7 +314,6 @@ def pay(request, repair_id):
     
     Returns a message confirming the payment status.
     """
-    # TODO: Add authentication & user check
     repairs_table = dynamodb.Table('RepairRequests')
 
     try:
