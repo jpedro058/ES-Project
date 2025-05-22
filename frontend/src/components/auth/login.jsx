@@ -36,7 +36,6 @@ export default function Login() {
       }
 
       const data = await response.json();
-      console.log("Login successful:", data);
       updateUser(data.user_id);
       updateToken(data.access_token);
 

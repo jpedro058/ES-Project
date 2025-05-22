@@ -1,10 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { UploadCloud, ImageIcon } from "lucide-react";
+import { AuthContext } from "../../context/AuthContext";
 
 export default function FacilAuth() {
   const [image, setImage] = useState(null);
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+  const { updateUser, updateToken } = useContext(AuthContext);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -35,12 +37,39 @@ export default function FacilAuth() {
     fileInputRef.current.click();
   };
 
-  const handleSubmit = (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (image) {
-      console.log("Imagem submetida:", image);
+    if (!image) {
+      alert("Please select an image.");
+      return;
     }
-  };
+
+    try {
+      const response = await fetch("http://localhost:8000/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // dizer que estamos a enviar JSON
+        },
+        body: JSON.stringify({ image_filename: image.name }),
+      });
+
+      console.log("Response status:", image);
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+      console.log("Response data:", data);
+      updateUser(data.user_id);
+      updateToken(data.access_token);
+
+      window.location.href = "/home";
+    } catch (error) {
+      console.error("Error submitting image:", error);
+      alert("Error submitting image. Please try again.");
+    }
+  }
 
   return (
     <form

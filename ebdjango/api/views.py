@@ -42,6 +42,12 @@ def register(request):
 
         # Caminho completo no S3
         image_key = f"toindex/{image_filename}"
+
+        if CustomUser.objects.filter(s3_image_key=image_key).exists():
+            return Response(
+                {'error': 'Rosto já registrado'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Indexa o rosto
         result = index_face(BUCKET_NAME, image_key)
@@ -93,7 +99,6 @@ def loginWithCredentials(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    print(f"Username: {username}, Password: {password}")
     user = authenticate(username=username, password=password)
 
     if user is not None:
@@ -112,67 +117,74 @@ def loginWithCredentials(request):
         )
 
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import CustomUser  # modelo de utilizador com campo `face_id`
+from .aws_rekognition import search_face  # função que usa AWS Rekognition
+
+BUCKET_NAME = "primetechusersloginfaces"  # nome do bucket S3
+
 @api_view(['POST'])
 def login(request):
     """
-    Endpoint for user login with facial recognition and username validation.
-    
-    Requires: image_filename, username
-    """
-    username = request.data.get('username')
-    image_filename = request.data.get('image_filename')  # Ex: "login_attempt.jpg"
+    Endpoint para login do utilizador apenas com reconhecimento facial.
 
-    if not image_filename or not username:
+    Requer: image_filename (str)
+    """
+    image_filename = request.data.get('image_filename')
+
+    if not image_filename:
         return Response(
-            {'error': 'username e image_filename são obrigatórios'},
+            {'error': 'O campo "image_filename" é obrigatório.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
-        # Verifica se o utilizador existe
-        user = CustomUser.objects.get(username=username)
-
         # Caminho da imagem no S3
         image_key = f"todetect/{image_filename}"
 
-        # Busca o rosto na imagem
+        # Procura pelo rosto na imagem usando Rekognition
         result = search_face(BUCKET_NAME, image_key)
 
-        if not result.get('FaceMatches'):
+        face_matches = result.get('FaceMatches')
+        if not face_matches:
             return Response(
-                {'error': 'Rosto não reconhecido'},
+                {'error': 'Rosto não reconhecido.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        face_match = result['FaceMatches'][0]
+        # Assume o rosto com maior similaridade
+        face_match = face_matches[0]
         if face_match['Similarity'] < 90:
             return Response(
-                {'error': 'Similaridade facial insuficiente'},
+                {'error': 'Similaridade facial insuficiente.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        face_id_detected = face_match['Face']['FaceId']
-        if face_id_detected != user.face_id:
+        face_id = face_match['Face']['FaceId']
+
+        # Verifica se o FaceId está associado a algum utilizador
+        try:
+            user = CustomUser.objects.get(face_id=face_id)
+            tokens = get_tokens_for_user(user)
+        except CustomUser.DoesNotExist:
             return Response(
-                {'error': 'Rosto não corresponde ao utilizador fornecido'},
-                status=status.HTTP_403_FORBIDDEN
+                {'error': 'Utilizador não encontrado para o rosto fornecido.'},
+                status=status.HTTP_404_NOT_FOUND
             )
 
         return Response({
-            'message': 'Login bem-sucedido',
+            'message': 'Login bem-sucedido.',
             'user_id': user.id,
+            'access_token': tokens['access'],
             'username': user.username,
             'similarity': face_match['Similarity']
         })
 
-    except CustomUser.DoesNotExist:
-        return Response(
-            {'error': 'Utilizador não encontrado'},
-            status=status.HTTP_404_NOT_FOUND
-        )
     except Exception as e:
         return Response(
-            {'error': str(e)},
+            {'error': f'Erro interno: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -433,44 +445,6 @@ def get_available_slots(request):
 
     serializer = AppointmentSlotSerializer(slots, many=True)
     return Response(serializer.data)
-""" from datetime import date
-from django.utils.timezone import make_aware, datetime
-
-from datetime import datetime, date, time
-
-@api_view(['GET'])
-def get_available_slots(request):
-
-    year = request.query_params.get('year')
-    month = request.query_params.get('month')
-
-    if not year or not month:
-        return Response({"error": "year and month are required query parameters."},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        year = int(year)
-        month = int(month)
-    except ValueError:
-        return Response({"error": "year and month must be integers."},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    today = date.today()
-
-    slots = AppointmentSlot.objects.filter(
-        start_time__year=year,
-        start_time__month=month,
-        is_booked=False
-    ).order_by('start_time')
-
-    if year == today.year and month == today.month:
-        start_of_today = datetime.combine(today, time.min) 
-        slots = slots.filter(start_time__gte=start_of_today)
-
-    serializer = AppointmentSlotSerializer(slots, many=True)
-    return Response(serializer.data) """
-
-
 
 @api_view(['GET'])
 def get_repair_by_id(request, repair_id):

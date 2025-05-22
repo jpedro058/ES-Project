@@ -244,3 +244,5 @@ export default function Admin() {
     </div>
   );
 }
+
+//TODO: MUDAR O VISTO PARA CRUZ QUANDO FICA LOST
