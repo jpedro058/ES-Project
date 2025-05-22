@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from api.models import CustomUser
 import json
+from decimal import Decimal  # Add this import at the top of the file
 
 stepfunctions = boto3.client('stepfunctions', region_name='us-east-1')
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
@@ -236,7 +237,7 @@ def submit_repair(request):
     device = body['device']
     service_type = body['service_type']
     description = body['description']
-    customer_id = body['customer_id']  #! Ideally get from logged-in user, not from body
+    customer_id = body['customer_id']
     appointment_date = body['appointment_date']  # e.g., ISO format string
     initial_cost = body['initial_cost']
 
@@ -399,25 +400,54 @@ def update_picked_up(request, repair_id):
 @api_view(['PUT'])
 def update_aditional_cost(request, repair_id):
     """
-    Admin: Update the additional cost of a repair.
+    Admin: Update the additional cost of a repair by adding to the current value.
 
-    Returns a message confirming the update.
+    Returns a message confirming the update along with the updated additional cost.
     """
     repairs_table = dynamodb.Table('RepairRequests')
     try:
         body = json.loads(request.body)
-        additional_cost = body['additional_cost']
+        additional_cost_to_add = body['additional_cost']
         
-        response = repairs_table.update_item(
+        # First get the current value
+        get_response = repairs_table.get_item(
+            Key={'repair_id': repair_id}
+        )
+        
+        if 'Item' not in get_response:
+            return Response({'error': 'Repair not found'}, status=404)
+            
+        item = get_response.get('Item', {})
+        current_cost = item.get('additional_cost', 0)
+        
+        # If current_cost is None or not numeric, treat as 0
+        if current_cost is None:
+            current_cost = 0
+        
+        # Calculate new total using Decimal instead of float
+        new_total = Decimal(str(current_cost)) + Decimal(str(additional_cost_to_add))
+        
+        # Update with new total
+        update_response = repairs_table.update_item(
             Key={
                 'repair_id': repair_id
             },
             UpdateExpression='SET additional_cost = :val1',
             ExpressionAttributeValues={
-                ':val1': additional_cost
-            }
+                ':val1': new_total
+            },
+            ReturnValues="UPDATED_NEW"  # This will return the updated attributes
         )
-        return Response({'message': 'Additional cost updated successfully.'})
+        
+        # Extract the updated value from the response
+        updated_value = update_response.get('Attributes', {}).get('additional_cost', new_total)
+        
+        return Response({
+            'message': 'Additional cost updated successfully.',
+            'previous_additional_cost': current_cost,
+            'added_cost': additional_cost_to_add,
+            'new_additional_cost': updated_value
+        })
     except Exception as e:
         return Response({'error': str(e)}, status=500)
     
