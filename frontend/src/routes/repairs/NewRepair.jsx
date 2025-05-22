@@ -150,9 +150,14 @@ export default function NewRepair() {
       if (!response.ok) {
         throw new Error("Failed to book repair.");
       }
-
-      const data = await response.json();
-      console.log("Booking successful:", data);
+      // Reset form fields
+      setClient("");
+      setDevice("");
+      setServiceType("");
+      setIssueDescription("");
+      setSelectedDate("");
+      setSelectedTime("");
+      setSelectedServiceOption(null);
       alert("Repair booked successfully!");
     } catch (error) {
       console.error("Error booking repair:", error);
@@ -177,8 +182,8 @@ export default function NewRepair() {
             label="Name"
             type="text"
             id="client"
-            placeholder="Client's name"
             value={client}
+            placeholder="Client's name"
             onChange={(e) => setClient(e.target.value)}
             required
           />
@@ -190,6 +195,7 @@ export default function NewRepair() {
             <SelectComponent
               options={deviceOptions}
               required
+              value={deviceOptions.find((opt) => opt.value === device) || null}
               onChange={(option) => setDevice(option.value)}
             />
           </div>

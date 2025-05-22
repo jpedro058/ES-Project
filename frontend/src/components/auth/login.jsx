@@ -18,7 +18,6 @@ export default function Login() {
     const username = formData.get("username");
     const password = formData.get("password");
 
-    console.log("Username:", username, "Password:", password);
     try {
       const response = await fetch(
         "http://localhost:8000/login/login-with-credentials/",

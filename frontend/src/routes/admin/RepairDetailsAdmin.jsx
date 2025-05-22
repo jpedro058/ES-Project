@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import Footer from "../../components/footer";
 import Navbar from "../../components/navbar";
 import { useParams } from "react-router-dom";
-import { Dialog } from "@headlessui/react";
-
 import {
   Wrench,
   Laptop,
@@ -14,8 +12,6 @@ import {
   UserCheck,
   CheckCircle,
 } from "lucide-react";
-import { AuthContext } from "../../context/AuthContext";
-import PaymentModal from "../../components/paymentModal";
 import AditionalCostModal from "../../components/aditionalCost";
 
 const iconMap = {
@@ -30,10 +26,10 @@ const iconMap = {
   customer_showed_up: <UserCheck />,
 };
 
-export default function RepairDetails() {
+export default function RepairDetailsAdmin() {
   const { repairId } = useParams();
   const [localRepair, setLocalRepair] = useState(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showAditionalCostModal, setShowAditionalCostModal] = useState(false);
   const steps =
     localRepair?.status === "Lost"
       ? ["Scheduled", "Repairing", "Waiting Payment", "Waiting Pickup", "Lost"]
@@ -93,22 +89,17 @@ export default function RepairDetails() {
     }
   }
 
-  async function handlePayment() {
+  async function handleAditionalCost(newValue) {
     try {
       const response = await fetch(
-        `http://localhost:8000/pay/${localRepair.repair_id}/`,
+        `http://localhost:8000/admin/adcost/${localRepair.repair_id}/`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            device: localRepair.device,
-            service_type: localRepair.service_type,
-            description: localRepair.description,
-            appointment_date: localRepair.appointment_date,
-            customer_id: localRepair.customer_id,
-            initial_cost: localRepair.initial_cost,
+            aditional_cost: newValue,
           }),
         }
       );
@@ -116,7 +107,8 @@ export default function RepairDetails() {
         throw new Error("Failed to update repair");
       }
       await fetchRepairById(localRepair.repair_id);
-      setShowPaymentModal(false);
+
+      setShowAditionalCostModal(false);
     } catch (error) {
       console.error("Error updating repair:", error);
     }
@@ -129,16 +121,15 @@ export default function RepairDetails() {
       </div>
     );
   }
-
   return (
     <div className="bg-[#0F3D57] text-white font-sans min-h-screen flex flex-col">
       <Navbar />
 
-      <PaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        amount={localRepair.initial_cost + (localRepair.aditional_cost || 0)}
-        onConfirmPayment={handlePayment}
+      <AditionalCostModal
+        isOpen={showAditionalCostModal}
+        onClose={() => setShowAditionalCostModal(false)}
+        currentValue={localRepair.aditional_cost || 0}
+        onConfirm={handleAditionalCost}
       />
 
       <main className="flex-grow px-6 md:px-12 py-16">
@@ -194,34 +185,37 @@ export default function RepairDetails() {
               <Info className="w-6 h-6 text-cyan-400 flex-shrink-0" />
             );
 
-            const isClickablePaidCard =
-              key === "paid" && localRepair.status === "Waiting Payment";
+            const isClickableAditionalCost =
+              key === "aditional_cost" &&
+              !localRepair.paid &&
+              !localRepair.picked_up &&
+              !localRepair.status.includes("Finished") &&
+              !localRepair.status.includes("Lost") &&
+              localRepair.status !== "Waiting Pickup";
 
             const cardContent = (
               <div
                 key={key}
                 className={`bg-[#123C55] p-5 rounded-2xl shadow-md border border-cyan-700 hover:shadow-lg transition duration-300 
                     ${
-                      isClickablePaidCard
-                        ? "cursor-pointer hover:border-green-500"
+                      isClickableAditionalCost
+                        ? "cursor-pointer hover:border-yellow-500"
                         : ""
                     }
-                    
                   `}
                 onClick={() => {
-                  if (isClickablePaidCard) {
-                    setShowPaymentModal(true);
+                  if (isClickableAditionalCost) {
+                    setShowAditionalCostModal(true);
                   }
                 }}
                 onKeyDown={(e) => {
                   if (
-                    isClickablePaidCard &&
+                    isClickableAditionalCost &&
                     (e.key === "Enter" || e.key === " ")
                   ) {
-                    setShowPaymentModal(true);
+                    setShowAditionalCostModal(true);
                   }
                 }}
-                tabIndex={isClickablePaidCard ? 0 : -1}
               >
                 <div className="flex items-center mb-2 gap-2 text-cyan-300 font-semibold text-xl">
                   {icon}

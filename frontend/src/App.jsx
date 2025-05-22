@@ -12,10 +12,19 @@ import Auth from "./routes/login/Auth";
 import Admin from "./routes/admin/admin";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
+import RepairDetailsAdmin from "./routes/admin/RepairDetailsAdmin";
 
 function RequireAuth({ children }) {
-  const { currentUser } = useContext(AuthContext);
-  return !currentUser ? <Navigate to="/auth" /> : children;
+  const { currentUser, currentToken } = useContext(AuthContext);
+
+  const now = new Date().getTime();
+  const isTokenValid = currentToken && currentToken.expiry > now;
+
+  if (!currentUser || !isTokenValid) {
+    return <Navigate to="/auth" />;
+  }
+
+  return children;
 }
 
 function App() {
@@ -37,7 +46,7 @@ function App() {
       ),
     },
     {
-      path: "/repair-details/:id",
+      path: "/repair-details/:repairId",
       element: (
         <RequireAuth>
           <RepairDetails />
@@ -55,6 +64,10 @@ function App() {
     {
       path: "/admin",
       element: <Admin />,
+    },
+    {
+      path: "/repair-details-admin/:repairId",
+      element: <RepairDetailsAdmin />,
     },
     {
       path: "/",

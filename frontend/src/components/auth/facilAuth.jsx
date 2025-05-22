@@ -53,14 +53,11 @@ export default function FacilAuth() {
         body: JSON.stringify({ image_filename: image.name }),
       });
 
-      console.log("Response status:", image);
-
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
 
       const data = await response.json();
-      console.log("Response data:", data);
       updateUser(data.user_id);
       updateToken(data.access_token);
 

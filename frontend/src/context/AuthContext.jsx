@@ -19,9 +19,40 @@ export const AuthContextProvider = ({ children }) => {
     setCurrentUser(user);
   };
 
-  const updateToken = (token) => {
-    setCurrentToken(token);
+  const updateToken = (token, expiresInSeconds = 1600) => {
+    const now = new Date().getTime();
+    const expiryTime = now + expiresInSeconds * 1000;
+    const tokenData = {
+      value: token,
+      expiry: expiryTime,
+    };
+    setCurrentToken(tokenData);
+    localStorage.setItem("token", JSON.stringify(tokenData));
   };
+
+  useEffect(() => {
+    if (!currentToken) return;
+
+    const now = new Date().getTime();
+    const timeout = currentToken.expiry - now;
+
+    if (timeout <= 0) {
+      setCurrentToken(null);
+      localStorage.removeItem("token");
+      setCurrentUser(null);
+      localStorage.removeItem("user");
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCurrentToken(null);
+      localStorage.removeItem("token");
+      setCurrentUser(null);
+      localStorage.removeItem("user");
+    }, timeout);
+
+    return () => clearTimeout(timer);
+  }, [currentToken]);
 
   useEffect(() => {
     localStorage.setItem("user", JSON.stringify(currentUser));

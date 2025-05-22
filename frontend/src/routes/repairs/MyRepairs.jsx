@@ -11,8 +11,18 @@ const repairStatus = {
       Scheduled
     </span>
   ),
+  Repairing: (
+    <span className="inline-block px-3 py-1 rounded-full bg-purple-400/20 text-purple-400 text-xs font-medium">
+      Repairing
+    </span>
+  ),
   "Waiting Payment": (
     <span className="inline-block px-3 py-1 rounded-full bg-yellow-400/20 text-yellow-300 text-xs font-medium">
+      Waiting Payment
+    </span>
+  ),
+  "Waiting Pickup": (
+    <span className="inline-block px-3 py-1 rounded-full bg-yellow-400/20 text-amber-600 text-xs font-medium">
       Waiting Payment
     </span>
   ),

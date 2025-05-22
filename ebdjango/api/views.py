@@ -13,7 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from api.models import CustomUser
 import json
-from decimal import Decimal  # Add this import at the top of the file
+from decimal import Decimal
 
 stepfunctions = boto3.client('stepfunctions', region_name='us-east-1')
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
@@ -34,15 +34,12 @@ def register(request):
         )
 
     try:
-        # Verifica se usuário já existe
         if CustomUser.objects.filter(username=username).exists():
             return Response(
                 {'error': 'Username já registrado'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-
-        # Caminho completo no S3
         image_key = f"toindex/{image_filename}"
 
         if CustomUser.objects.filter(s3_image_key=image_key).exists():
@@ -51,13 +48,6 @@ def register(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if CustomUser.objects.filter(s3_image_key=image_key).exists():
-            return Response(
-                {'error': 'Rosto já registrado'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Indexa o rosto
         result = index_face(BUCKET_NAME, image_key)
         
         if not result.get('FaceRecords'):
@@ -68,7 +58,6 @@ def register(request):
 
         face_id = result['FaceRecords'][0]['Face']['FaceId']
         
-        # Cria o usuário
         user = CustomUser.objects.create_user(
             username=username,
             password=password,
@@ -123,13 +112,6 @@ def loginWithCredentials(request):
             {'error': 'Credenciais inválidas'},
             status=status.HTTP_401_UNAUTHORIZED
         )
-
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from .models import CustomUser  # modelo de utilizador com campo `face_id`
-from .aws_rekognition import search_face  # função que usa AWS Rekognition
 
 BUCKET_NAME = "primetechusersloginfaces"  # nome do bucket S3
 

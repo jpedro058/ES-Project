@@ -1,4 +1,3 @@
-//import { useEffect, useState } from "react";
 import { useEffect, useState } from "react";
 import Footer from "../../components/footer";
 import Navbar from "../../components/navbar";
@@ -12,8 +11,18 @@ const repairStatus = {
       Scheduled
     </span>
   ),
+  Repairing: (
+    <span className="inline-block px-3 py-1 rounded-full bg-purple-400/20 text-purple-400 text-xs font-medium">
+      Repairing
+    </span>
+  ),
   "Waiting Payment": (
     <span className="inline-block px-3 py-1 rounded-full bg-yellow-400/20 text-yellow-300 text-xs font-medium">
+      Waiting Payment
+    </span>
+  ),
+  "Waiting Pickup": (
+    <span className="inline-block px-3 py-1 rounded-full bg-yellow-400/20 text-amber-600 text-xs font-medium">
       Waiting Payment
     </span>
   ),
@@ -41,7 +50,6 @@ export default function Admin() {
         }
         const data = await response.json();
         setRepairs(data.repairs);
-        console.log(data.repairs);
       } catch (error) {
         console.error("Error fetching repairs:", error);
       }
@@ -207,11 +215,12 @@ export default function Admin() {
                       </td>
                       <td className="py-4 px-6 space-x-5">
                         <Link
-                          to={`/repair-details/${repair.repair_id}`}
-                          state={{ repair }}
-                          className="hover:text-[#00B8D9] hover:underline transition duration-300 ease-out"
+                          to={`/repair-details-admin/${repair.repair_id}`}
+                          state={{ repair, fromAdmin: true }}
                         >
-                          Details
+                          <span className="inline-block px-3 py-1 rounded-full text-sm hover:underline text-[#00B8D9] font-medium">
+                            Details
+                          </span>
                         </Link>
 
                         {repair.status === "Lost" ? (
