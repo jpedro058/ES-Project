@@ -26,7 +26,6 @@ export default function NewRepair() {
   const [device, setDevice] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [issueDescription, setIssueDescription] = useState("");
-  const [email, setEmail] = useState("");
   const estimatedPrice = 100;
 
   const { currentUser } = useContext(AuthContext);
@@ -129,9 +128,7 @@ export default function NewRepair() {
     }
 
     try {
-      const appointmentDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
-        .toISOString()
-        .replace(/\.\d{3}Z$/, "Z");
+      const appointmentDateTime = `${selectedDate}T${selectedTime}:00Z`;
 
       const body = {
         device,
@@ -183,16 +180,6 @@ export default function NewRepair() {
             placeholder="Client's name"
             value={client}
             onChange={(e) => setClient(e.target.value)}
-            required
-          />
-
-          <InputField
-            label="Email"
-            type="email"
-            id="email"
-            placeholder="Client's email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
           />
 

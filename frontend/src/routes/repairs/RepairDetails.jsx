@@ -178,7 +178,7 @@ export default function RepairDetails() {
             );
 
             const isClickablePaidCard =
-              key === "paid" && localRepair.status === "Scheduled";
+              key === "paid" && localRepair.status === "Waiting Payment";
 
             const cardContent = (
               <div
