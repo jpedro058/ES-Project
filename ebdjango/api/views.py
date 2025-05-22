@@ -414,9 +414,8 @@ def update_aditional_cost(request, repair_id):
     repairs_table = dynamodb.Table('RepairRequests')
     try:
         body = json.loads(request.body)
-        additional_cost_to_add = body['additional_cost']
+        additional_cost_to_add = body['aditional_cost']
         
-        # First get the current value
         get_response = repairs_table.get_item(
             Key={'repair_id': repair_id}
         )
@@ -425,13 +424,8 @@ def update_aditional_cost(request, repair_id):
             return Response({'error': 'Repair not found'}, status=404)
             
         item = get_response.get('Item', {})
-        current_cost = item.get('additional_cost', 0)
+        current_cost = item.get('aditional_cost')
         
-        # If current_cost is None or not numeric, treat as 0
-        if current_cost is None:
-            current_cost = 0
-        
-        # Calculate new total using Decimal instead of float
         new_total = Decimal(str(current_cost)) + Decimal(str(additional_cost_to_add))
         
         # Update with new total
@@ -439,21 +433,18 @@ def update_aditional_cost(request, repair_id):
             Key={
                 'repair_id': repair_id
             },
-            UpdateExpression='SET additional_cost = :val1',
+            UpdateExpression='SET aditional_cost = :val1',
             ExpressionAttributeValues={
                 ':val1': new_total
             },
-            ReturnValues="UPDATED_NEW"  # This will return the updated attributes
+            ReturnValues="UPDATED_NEW" 
         )
         
-        # Extract the updated value from the response
-        updated_value = update_response.get('Attributes', {}).get('additional_cost', new_total)
+        updated_value = update_response.get('Attributes', {}).get('aditional_cost', new_total)
         
         return Response({
             'message': 'Additional cost updated successfully.',
-            'previous_additional_cost': current_cost,
-            'added_cost': additional_cost_to_add,
-            'new_additional_cost': updated_value
+            'new_aditional_cost': updated_value
         })
     except Exception as e:
         return Response({'error': str(e)}, status=500)
