@@ -39,9 +39,16 @@ def register(request):
                 {'error': 'Username já registrado'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
 
         # Caminho completo no S3
         image_key = f"toindex/{image_filename}"
+        
+        if CustomUser.objects.filter(s3_image_key=image_key).exists():
+            return Response(
+                {'error': 'Rosto já registrado'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Indexa o rosto
         result = index_face(BUCKET_NAME, image_key)
