@@ -22,6 +22,18 @@ BUCKET_NAME = 'primetechusersloginfaces'
 
 @api_view(['POST'])
 def register(request):
+    """
+    Register a new user using facial recognition.
+
+    Required fields:
+    - username: User's unique username
+    - password: User's password
+    - image_filename: Image filename stored in S3 under 'toindex/'
+
+    Returns:
+    - Success message with face_id and S3 path
+    - Error message if validation fails
+    """
     
     username = request.data.get('username')
     password = request.data.get('password')
@@ -29,14 +41,14 @@ def register(request):
     
     if not all([username, password, image_filename]):
         return Response(
-            {'error': 'username, password e image_filename são obrigatórios'},
+            {'error': 'username, password and image_filename are required.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
         if CustomUser.objects.filter(username=username).exists():
             return Response(
-                {'error': 'Username já registrado'}, 
+                {'error': 'Username is already registered.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -44,7 +56,7 @@ def register(request):
 
         if CustomUser.objects.filter(s3_image_key=image_key).exists():
             return Response(
-                {'error': 'Rosto já registrado'}, 
+                {'error': 'Face is already registered.'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -52,7 +64,7 @@ def register(request):
         
         if not result.get('FaceRecords'):
             return Response(
-                {'error': 'Nenhum rosto detectado na imagem'},
+                {'error': 'No face detected in the image'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -65,9 +77,8 @@ def register(request):
             s3_image_key=image_key
         )
 
-
         return Response({
-            'message': 'Registro bem-sucedido',
+            'message': 'Registration successful.',
             'face_id': face_id,
             's3_path': f"s3://{BUCKET_NAME}/{image_key}"
         }, status=status.HTTP_201_CREATED)
@@ -87,12 +98,23 @@ def get_tokens_for_user(user):
 
 @api_view(['POST'])
 def loginWithCredentials(request):
+    """
+    Login using username and password.
+
+    Required fields:
+    - username: User's username
+    - password: User's password
+
+    Returns:
+    - Access and refresh tokens on success
+    - Error message on failure
+    """
     username = request.data.get('username')
     password = request.data.get('password')
 
     if not all([username, password]):
         return Response(
-            {'error': 'username e password são obrigatórios'},
+            {'error': 'username and password are required'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -101,7 +123,7 @@ def loginWithCredentials(request):
     if user is not None:
         tokens = get_tokens_for_user(user)
         return Response({
-            'message': 'Login bem-sucedido',
+            'message': 'Login successful',
             'user_id': user.id,
             'username': user.username,
             'access_token': tokens['access'],
@@ -109,63 +131,62 @@ def loginWithCredentials(request):
         })
     else:
         return Response(
-            {'error': 'Credenciais inválidas'},
+            {'error': 'Invalid credentials'},
             status=status.HTTP_401_UNAUTHORIZED
         )
-
-BUCKET_NAME = "primetechusersloginfaces"  # nome do bucket S3
 
 @api_view(['POST'])
 def login(request):
     """
-    Endpoint para login do utilizador apenas com reconhecimento facial.
+    Login using facial recognition only.
 
-    Requer: image_filename (str)
+    Required fields:
+    - image_filename: Image filename stored in S3 under 'todetect/'
+
+    Returns:
+    - Access token and user info on success
+    - Error message on failure
     """
     image_filename = request.data.get('image_filename')
 
     if not image_filename:
         return Response(
-            {'error': 'O campo "image_filename" é obrigatório.'},
+            {'error': '"image_filename" is required.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     try:
-        # Caminho da imagem no S3
         image_key = f"todetect/{image_filename}"
 
-        # Procura pelo rosto na imagem usando Rekognition
         result = search_face(BUCKET_NAME, image_key)
 
         face_matches = result.get('FaceMatches')
         if not face_matches:
             return Response(
-                {'error': 'Rosto não reconhecido.'},
+                {'error': 'Face not recognized.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Assume o rosto com maior similaridade
         face_match = face_matches[0]
         if face_match['Similarity'] < 90:
             return Response(
-                {'error': 'Similaridade facial insuficiente.'},
+                {'error': 'Facial similarity is too low.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
         face_id = face_match['Face']['FaceId']
 
-        # Verifica se o FaceId está associado a algum utilizador
         try:
             user = CustomUser.objects.get(face_id=face_id)
             tokens = get_tokens_for_user(user)
         except CustomUser.DoesNotExist:
             return Response(
-                {'error': 'Utilizador não encontrado para o rosto fornecido.'},
+                {'error': 'User not found for the given face.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
         return Response({
-            'message': 'Login bem-sucedido.',
+            'message': 'Login successful.',
             'user_id': user.id,
             'access_token': tokens['access'],
             'username': user.username,
@@ -174,7 +195,7 @@ def login(request):
 
     except Exception as e:
         return Response(
-            {'error': f'Erro interno: {str(e)}'},
+            {'error': f'Internal error: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -215,32 +236,33 @@ def shop_info(request):
     })
 
 @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
 def submit_repair(request):
     """
-    Submit a new repair request.
+    Submit a repair request and start a StepFunctions workflow.
 
-    Initiates a StepFunctions workflow for repair processing.
+    Required fields in JSON body:
+    - device, service_type, description, customer_id, appointment_date, initial_cost
+
+    Returns:
+    - StepFunctions execution ARN
+    - Error if appointment is unavailable or workflow fails
     """
     body = json.loads(request.body)
     device = body['device']
     service_type = body['service_type']
     description = body['description']
     customer_id = body['customer_id']
-    appointment_date = body['appointment_date']  # e.g., ISO format string
+    appointment_date = body['appointment_date']
     initial_cost = body['initial_cost']
 
-    # Check if the appointment slot is available
     try:
         slot = AppointmentSlot.objects.get(start_time=appointment_date, is_booked=False)
     except AppointmentSlot.DoesNotExist:
         return JsonResponse({'error': 'Selected appointment slot is no longer available.'}, status=400)
 
-    # Mark the slot as booked
     slot.is_booked = True
     slot.save()
 
-    # Start the StepFunctions workflow
     try:
         response = stepfunctions.start_execution(
             stateMachineArn='arn:aws:states:us-east-1:995136952401:stateMachine:RepairWorkflow',
@@ -255,21 +277,20 @@ def submit_repair(request):
         )
         return JsonResponse({'executionArn': response['executionArn']})
     except Exception as e:
-        # Optionally, you might want to rollback the booking here if workflow fails
         slot.is_booked = False
         slot.save()
         return JsonResponse({'error': str(e)}, status=500)
     
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 def get_repairs(request):
     """
-    Retrieve repair requests, optionally filtered by customer_id.
-    
-    Query parameters:
-    - customer_id: Filter repairs by customer ID
-    
-    Returns a list of repair information including id, status, and device type.
+    Retrieve all repair requests or filter by customer ID.
+
+    Query Parameters:
+    - customer_id (optional): Filter by customer ID
+
+    Returns:
+    - List of repair objects
     """
     customer_id = request.query_params.get('customer_id')
     repairs_table = dynamodb.Table('RepairRequests')
@@ -309,12 +330,15 @@ def get_repairs(request):
         return Response({'error': str(e)}, status=500)
   
 @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
 def pay(request, repair_id):
     """
     Process payment for a repair.
-    
-    Returns a message confirming the payment status.
+
+    Path parameter:
+    - repair_id: ID of the repair
+
+    Returns:
+    - Payment confirmation or error if already paid or not found
     """
     repairs_table = dynamodb.Table('RepairRequests')
 
@@ -410,7 +434,6 @@ def update_aditional_cost(request, repair_id):
         
         new_total = Decimal(str(current_cost)) + Decimal(str(additional_cost_to_add))
         
-        # Update with new total
         update_response = repairs_table.update_item(
             Key={
                 'repair_id': repair_id
@@ -433,6 +456,9 @@ def update_aditional_cost(request, repair_id):
     
 @api_view(['GET'])
 def get_available_slots(request):
+    """
+    Retrieve all available appointment slots for a given year and month.
+    """
     year = request.query_params.get('year')
     month = request.query_params.get('month')
 
