@@ -13,6 +13,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import AditionalCostModal from "../../components/aditionalCost";
+import { RepairDetailCard } from "../../components/repair/repairDetailsCard";
 
 const iconMap = {
   device: <Laptop />,
@@ -193,41 +194,20 @@ export default function RepairDetailsAdmin() {
               !localRepair.status.includes("Lost") &&
               localRepair.status !== "Waiting Pickup";
 
-            const cardContent = (
-              <div
+            return (
+              <RepairDetailCard
                 key={key}
-                className={`bg-[#123C55] p-5 rounded-2xl shadow-md border border-cyan-700 hover:shadow-lg transition duration-300 
-                    ${
-                      isClickableAditionalCost
-                        ? "cursor-pointer hover:border-yellow-500"
-                        : ""
-                    }
-                  `}
+                label={formattedKey}
+                value={formatValue(key, value)}
+                icon={icon}
+                clickable={isClickableAditionalCost}
                 onClick={() => {
                   if (isClickableAditionalCost) {
                     setShowAditionalCostModal(true);
                   }
                 }}
-                onKeyDown={(e) => {
-                  if (
-                    isClickableAditionalCost &&
-                    (e.key === "Enter" || e.key === " ")
-                  ) {
-                    setShowAditionalCostModal(true);
-                  }
-                }}
-              >
-                <div className="flex items-center mb-2 gap-2 text-cyan-300 font-semibold text-xl">
-                  {icon}
-                  <span>{formattedKey}</span>
-                </div>
-                <div className="text-white text-lg font-medium">
-                  {formatValue(key, value)}
-                </div>
-              </div>
+              />
             );
-
-            return cardContent;
           })}
         </div>
       </main>

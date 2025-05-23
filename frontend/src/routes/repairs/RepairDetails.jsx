@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import Footer from "../../components/footer";
 import Navbar from "../../components/navbar";
-import { useParams } from "react-router-dom";
-import { Dialog } from "@headlessui/react";
 
 import {
-  Wrench,
-  Laptop,
-  FileText,
-  Euro,
-  Info,
   CalendarClock,
-  UserCheck,
   CheckCircle,
+  Euro,
+  FileText,
+  Info,
+  Laptop,
+  UserCheck,
+  Wrench,
 } from "lucide-react";
-import { AuthContext } from "../../context/AuthContext";
 import PaymentModal from "../../components/paymentModal";
-import AditionalCostModal from "../../components/aditionalCost";
+import { RepairDetailCard } from "../../components/repair/repairDetailsCard";
 
 const iconMap = {
   device: <Laptop />,
@@ -197,43 +195,18 @@ export default function RepairDetails() {
             const isClickablePaidCard =
               key === "paid" && localRepair.status === "Waiting Payment";
 
-            const cardContent = (
-              <div
+            return (
+              <RepairDetailCard
                 key={key}
-                className={`bg-[#123C55] p-5 rounded-2xl shadow-md border border-cyan-700 hover:shadow-lg transition duration-300 
-                    ${
-                      isClickablePaidCard
-                        ? "cursor-pointer hover:border-green-500"
-                        : ""
-                    }
-                    
-                  `}
+                label={formattedKey}
+                value={formatValue(key, value)}
+                icon={icon}
+                clickable={isClickablePaidCard}
                 onClick={() => {
-                  if (isClickablePaidCard) {
-                    setShowPaymentModal(true);
-                  }
+                  if (isClickablePaidCard) setShowPaymentModal(true);
                 }}
-                onKeyDown={(e) => {
-                  if (
-                    isClickablePaidCard &&
-                    (e.key === "Enter" || e.key === " ")
-                  ) {
-                    setShowPaymentModal(true);
-                  }
-                }}
-                tabIndex={isClickablePaidCard ? 0 : -1}
-              >
-                <div className="flex items-center mb-2 gap-2 text-cyan-300 font-semibold text-xl">
-                  {icon}
-                  <span>{formattedKey}</span>
-                </div>
-                <div className="text-white text-lg font-medium">
-                  {formatValue(key, value)}
-                </div>
-              </div>
+              />
             );
-
-            return cardContent;
           })}
         </div>
       </main>
