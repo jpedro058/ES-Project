@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '6bm=du%rhn+=-05b)rvlptx5n$xpmy_&a%y134!z5z)c(%)qm$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['django-env.eba-cfca3zhn.us-east-1.elasticbeanstalk.com', '127.0.0.1', 'localhost']
 
@@ -147,6 +147,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
