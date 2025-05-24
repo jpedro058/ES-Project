@@ -11,7 +11,9 @@ const DatePickerField = ({ selectedDate, setSelectedDate }) => {
         selected={selectedDate ? new Date(selectedDate) : null}
         onChange={(date) => {
           if (date) {
-            const formatted = date.toISOString().split("T")[0];
+            const formatted = `${date.getFullYear()}-${String(
+              date.getMonth() + 1
+            ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
             setSelectedDate(formatted);
           }
         }}

@@ -1,18 +1,18 @@
-import "./styles/app.css";
+import { useContext } from "react";
 import {
   createBrowserRouter,
-  RouterProvider,
   Navigate,
+  RouterProvider,
 } from "react-router-dom";
+import { AuthContext } from "./context/AuthContext";
+import Admin from "./routes/admin/Admin";
+import RepairDetailsAdmin from "./routes/admin/RepairDetailsAdmin";
 import HomePage from "./routes/home/HomePage";
+import Auth from "./routes/login/Auth";
 import MyRepairs from "./routes/repairs/MyRepairs";
 import NewRepair from "./routes/repairs/NewRepair";
 import RepairDetails from "./routes/repairs/RepairDetails";
-import Auth from "./routes/login/Auth";
-import Admin from "./routes/admin/admin";
-import { useContext } from "react";
-import { AuthContext } from "./context/AuthContext";
-import RepairDetailsAdmin from "./routes/admin/RepairDetailsAdmin";
+import "./styles/app.css";
 
 function RequireAuth({ children }) {
   const { currentUser, currentToken } = useContext(AuthContext);

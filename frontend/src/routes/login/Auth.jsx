@@ -1,9 +1,9 @@
 import { LogIn } from "lucide-react";
-import Footer from "../../components/footer";
-import Navbar from "../../components/navbar";
-import Login from "../../components/auth/login";
 import { useState } from "react";
 import FacilAuth from "../../components/auth/facilAuth";
+import Login from "../../components/auth/login";
+import Footer from "../../components/footer";
+import Navbar from "../../components/navbar";
 
 export default function Auth() {
   const [isFaceId, setIsFaceId] = useState(false);

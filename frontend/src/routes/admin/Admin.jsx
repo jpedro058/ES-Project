@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import Footer from "../../components/footer";
 import Navbar from "../../components/navbar";
-import { Link } from "react-router-dom";
-import { Check, XIcon } from "lucide-react";
-import StatusBadge from "../../constants/repairStatus";
 import RepairsTable from "../../components/repair/repairsTable";
 
 export default function Admin() {

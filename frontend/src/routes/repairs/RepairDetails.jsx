@@ -1,8 +1,3 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import Footer from "../../components/footer";
-import Navbar from "../../components/navbar";
-
 import {
   CalendarClock,
   CheckCircle,
@@ -13,6 +8,10 @@ import {
   UserCheck,
   Wrench,
 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import Footer from "../../components/footer";
+import Navbar from "../../components/navbar";
 import PaymentModal from "../../components/paymentModal";
 import { RepairDetailCard } from "../../components/repair/repairDetailsCard";
 

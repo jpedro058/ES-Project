@@ -1,10 +1,10 @@
-import brokenScreen from "../../assets/brokenScreen.png";
+import { useEffect, useState } from "react";
 import bateria from "../../assets/bateria.png";
+import brokenScreen from "../../assets/brokenScreen.png";
 import software from "../../assets/software.png";
 import virus from "../../assets/virus.png";
-import Navbar from "../../components/navbar";
 import Footer from "../../components/footer";
-import { useEffect, useState } from "react";
+import Navbar from "../../components/navbar";
 
 const servicesImg = [
   {
