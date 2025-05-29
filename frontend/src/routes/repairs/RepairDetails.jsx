@@ -83,9 +83,7 @@ export default function RepairDetails() {
   }, [repairId]);
 
   async function fetchRepairById(id) {
-    const res = await fetch(
-      `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/repairs/${id}`
-    );
+    const res = await fetch(`/api/repairs/${id}`);
     if (res.ok) {
       const data = await res.json();
       setLocalRepair(data.repair);
@@ -94,23 +92,20 @@ export default function RepairDetails() {
 
   async function handlePayment() {
     try {
-      const response = await fetch(
-        `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/pay/${localRepair.repair_id}/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            device: localRepair.device,
-            service_type: localRepair.service_type,
-            description: localRepair.description,
-            appointment_date: localRepair.appointment_date,
-            customer_id: localRepair.customer_id,
-            initial_cost: localRepair.initial_cost,
-          }),
-        }
-      );
+      const response = await fetch(`/api/pay/${localRepair.repair_id}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          device: localRepair.device,
+          service_type: localRepair.service_type,
+          description: localRepair.description,
+          appointment_date: localRepair.appointment_date,
+          customer_id: localRepair.customer_id,
+          initial_cost: localRepair.initial_cost,
+        }),
+      });
       if (!response.ok) {
         throw new Error("Failed to update repair");
       }

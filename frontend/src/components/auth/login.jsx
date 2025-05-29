@@ -19,16 +19,13 @@ export default function Login() {
     const password = formData.get("password");
 
     try {
-      const response = await fetch(
-        "http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/login/login-with-credentials/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const response = await fetch("/api/login/login-with-credentials/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
       if (!response.ok) {
         throw new Error("Invalid credentials");

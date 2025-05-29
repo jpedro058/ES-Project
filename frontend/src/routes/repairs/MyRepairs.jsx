@@ -12,9 +12,7 @@ export default function MyRepairs() {
   useEffect(() => {
     const fetchRepairs = async () => {
       try {
-        const response = await fetch(
-          `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/repairs?customer_id=${currentUser}`
-        );
+        const response = await fetch(`/api/repairs?customer_id=${currentUser}`);
         if (!response.ok) {
           throw new Error("Failed to fetch repairs");
         }

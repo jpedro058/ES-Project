@@ -9,9 +9,7 @@ export default function Admin() {
   useEffect(() => {
     const fetchRepairs = async () => {
       try {
-        const response = await fetch(
-          "http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/repairs"
-        );
+        const response = await fetch("/api/repairs");
         if (!response.ok) {
           throw new Error("Failed to fetch repairs");
         }
@@ -29,7 +27,7 @@ export default function Admin() {
     const updatedRepair = async () => {
       try {
         const response = await fetch(
-          `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/admin/picked-up/${repair.repair_id}/`,
+          `/api/admin/picked-up/${repair.repair_id}/`,
           {
             method: "PUT",
             headers: {
@@ -56,7 +54,7 @@ export default function Admin() {
     const updatedRepair = async () => {
       try {
         const response = await fetch(
-          `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/admin/showed-up/${repair.repair_id}/`,
+          `/api/admin/showed-up/${repair.repair_id}/`,
           {
             method: "PUT",
             headers: {
