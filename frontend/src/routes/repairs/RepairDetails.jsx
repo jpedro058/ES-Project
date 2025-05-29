@@ -83,7 +83,7 @@ export default function RepairDetails() {
   }, [repairId]);
 
   async function fetchRepairById(id) {
-    const res = await fetch(`/api/repairs/${id}`);
+    const res = await fetch(`/api/repairs/${id}/?format=json`);
     if (res.ok) {
       const data = await res.json();
       setLocalRepair(data.repair);

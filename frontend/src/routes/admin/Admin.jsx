@@ -9,11 +9,13 @@ export default function Admin() {
   useEffect(() => {
     const fetchRepairs = async () => {
       try {
-        const response = await fetch("/api/repairs");
+        const response = await fetch("/api/repairs/?format=json");
         if (!response.ok) {
           throw new Error("Failed to fetch repairs");
         }
+        console.log("Fetching repairs from API", response);
         const data = await response.json();
+        console.log("Repairs data:", data);
         setRepairs(data.repairs);
       } catch (error) {
         console.error("Error fetching repairs:", error);

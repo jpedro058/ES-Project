@@ -12,10 +12,13 @@ export default function MyRepairs() {
   useEffect(() => {
     const fetchRepairs = async () => {
       try {
-        const response = await fetch(`/api/repairs?customer_id=${currentUser}`);
+        const response = await fetch(
+          `/api/repairs/?customer_id=${currentUser}&format=json`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch repairs");
         }
+        console.log("Fetching repairs from API", response);
         const data = await response.json();
         setRepairs(data.repairs);
       } catch (error) {

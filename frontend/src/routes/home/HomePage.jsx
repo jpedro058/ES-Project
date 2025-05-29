@@ -27,11 +27,14 @@ export default function HomePage() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch("/api/");
+        const response = await fetch("/api/?format=json");
         if (!response.ok) {
           throw new Error("Failed to fetch services");
         }
+        console.log("Fetching services from API", response);
         const data = await response.json();
+        console.log("Services data:", data);
+
         setServices(data.services);
       } catch (error) {
         console.error("Error fetching services:", error);

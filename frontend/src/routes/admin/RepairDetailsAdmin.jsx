@@ -83,7 +83,7 @@ export default function RepairDetailsAdmin() {
   }, [repairId]);
 
   async function fetchRepairById(id) {
-    const res = await fetch(`/api/repairs/${id}`);
+    const res = await fetch(`/api/repairs/${id}/?format=json`);
     if (res.ok) {
       const data = await res.json();
       setLocalRepair(data.repair);
@@ -93,7 +93,7 @@ export default function RepairDetailsAdmin() {
   async function handleAditionalCost(newValue) {
     try {
       const response = await fetch(
-        `/api/admin/adcost/${localRepair.repair_id}/`,
+        `/api/admin/adcost/${localRepair.repair_id}/?format=json`,
         {
           method: "PUT",
           headers: {
