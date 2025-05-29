@@ -12,7 +12,7 @@ import Auth from "./routes/login/Auth";
 import MyRepairs from "./routes/repairs/MyRepairs";
 import NewRepair from "./routes/repairs/NewRepair";
 import RepairDetails from "./routes/repairs/RepairDetails";
-import "./styles/app.css";
+import "./styles/App.css";
 
 function RequireAuth({ children }) {
   const { currentUser, currentToken } = useContext(AuthContext);

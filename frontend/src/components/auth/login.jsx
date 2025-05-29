@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
-import "../../styles/login.css";
+import "../../styles/Login.css";
 
 export default function Login() {
   const [error, setError] = useState(null);
