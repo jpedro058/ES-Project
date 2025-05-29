@@ -83,7 +83,9 @@ export default function RepairDetailsAdmin() {
   }, [repairId]);
 
   async function fetchRepairById(id) {
-    const res = await fetch(`http://localhost:8000/repairs/${id}`);
+    const res = await fetch(
+      `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/repairs/${id}`
+    );
     if (res.ok) {
       const data = await res.json();
       setLocalRepair(data.repair);
@@ -93,7 +95,7 @@ export default function RepairDetailsAdmin() {
   async function handleAditionalCost(newValue) {
     try {
       const response = await fetch(
-        `http://localhost:8000/admin/adcost/${localRepair.repair_id}/`,
+        `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/admin/adcost/${localRepair.repair_id}/`,
         {
           method: "PUT",
           headers: {

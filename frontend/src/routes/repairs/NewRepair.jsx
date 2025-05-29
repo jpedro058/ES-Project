@@ -70,7 +70,7 @@ export default function NewRepair() {
 
       try {
         const response = await fetch(
-          `http://localhost:8000/available-slots/?year=${year}&month=${month}`
+          `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/available-slots/?year=${year}&month=${month}`
         );
 
         if (!response.ok) {
@@ -139,13 +139,16 @@ export default function NewRepair() {
         initial_cost: estimatedPrice,
       };
 
-      const response = await fetch("http://localhost:8000/new-repair/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+      const response = await fetch(
+        "http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/new-repair/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to book repair.");

@@ -45,13 +45,16 @@ export default function FacilAuth() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/login/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json", // dizer que estamos a enviar JSON
-        },
-        body: JSON.stringify({ image_filename: image.name }),
-      });
+      const response = await fetch(
+        "http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/login/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json", // dizer que estamos a enviar JSON
+          },
+          body: JSON.stringify({ image_filename: image.name }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Network response was not ok");

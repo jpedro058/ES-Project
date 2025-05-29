@@ -20,7 +20,7 @@ export default function Login() {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/login/login-with-credentials/",
+        "http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/login/login-with-credentials/",
         {
           method: "POST",
           headers: {

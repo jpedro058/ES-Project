@@ -13,7 +13,7 @@ export default function MyRepairs() {
     const fetchRepairs = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8000/repairs?customer_id=${currentUser}`
+          `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/repairs?customer_id=${currentUser}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch repairs");

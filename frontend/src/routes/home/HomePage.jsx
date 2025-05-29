@@ -27,7 +27,9 @@ export default function HomePage() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch("http://localhost:8000/");
+        const response = await fetch(
+          "http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/"
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch services");
         }

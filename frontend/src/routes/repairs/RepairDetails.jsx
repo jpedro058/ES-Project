@@ -83,7 +83,9 @@ export default function RepairDetails() {
   }, [repairId]);
 
   async function fetchRepairById(id) {
-    const res = await fetch(`http://localhost:8000/repairs/${id}`);
+    const res = await fetch(
+      `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/repairs/${id}`
+    );
     if (res.ok) {
       const data = await res.json();
       setLocalRepair(data.repair);
@@ -93,7 +95,7 @@ export default function RepairDetails() {
   async function handlePayment() {
     try {
       const response = await fetch(
-        `http://localhost:8000/pay/${localRepair.repair_id}/`,
+        `http://django-env.eba-gmvprtui.us-east-1.elasticbeanstalk.com/pay/${localRepair.repair_id}/`,
         {
           method: "POST",
           headers: {
